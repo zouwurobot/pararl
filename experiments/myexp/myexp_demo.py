@@ -3,11 +3,13 @@ from otter.experiment import run
 import otter.gym as gym
 
 env_params = {
-    "environment_name": "Reacher",
+      "environment_name": "Reach",
     "random_start": True,
     "random_target": True,
     "image": True,
-    "image_dim": 64,
+    "image_dim": 128,
+    "goal_point": [0.5, 0, 0.5],
+    '_render': False
 }
 
 env = gym.from_config(env_params)

@@ -120,7 +120,7 @@ class Myexp(Experiment):
         num_rollouts = self.data_params['num_rollouts']
         policy = lambda _, __, ___, noise: noise
 
-        rollouts = self.env.rollouts(num_rollouts, self.horizon, policy=policy, noise=noise_function, show_progress=True)
+        rollouts = self.env.rollouts(num_rollouts, self.horizon, policy=policy, noise=noise_function, show_progress=True, )
 
         rollouts = (
             rollouts[0],
