@@ -99,22 +99,23 @@ class GymReach(gym.Env):
             # build gym env
             p.loadURDF(os.path.join(self._urdfRoot, "plane.urdf"), [0, 0, -1])
             self.tableUid = p.loadURDF(os.path.join(self._urdfRoot, "table/table.urdf"),
-                                       [0.5000000, 0.00000, -.620000],
+                                       [0.0000000, -0.50000, -.620000],
                                        [0.000000, 0.000000, 0.0, 1.0])
 
-            xpos = 0.55 + 0.12 * random.random()
-            ypos = 0
-            ang = math.pi / 2
-            zpos = 0.25
-            orn = p.getQuaternionFromEuler([ang, 0, 0])
-            self.cubeUid = p.loadURDF(os.path.join(self._robot_urdfRoot, "Cube.urdf"), [0.55, 0, 0.15],
+            self.cubeUid = p.loadURDF(os.path.join(self._robot_urdfRoot, "Cube.urdf"),
+                                      [0.0, -0.55, 0.15],
                                       [0, 0, 0, 1],
                                       useFixedBase=True)
             p.setGravity(0, 0, -9.81)
 
             # camera configuration
-            self._CameraViewMatrix = p.computeViewMatrixFromYawPitchRoll([xpos, ypos, zpos], 1, -90, -60, 0, 2)
-            # self._CameraProjMatrix = p.computeProjectionMatrix(-0.5000, 0.5000, -0.5000, 1.5000, 1.0000, 6.0000)
+            xpos = 0
+            ypos = -0.55 - 0.12 * random.random()
+            ang = math.pi / 2
+            zpos = 0.25
+            orn = p.getQuaternionFromEuler([ang, 0, 0])
+            self._CameraViewMatrix = p.computeViewMatrixFromYawPitchRoll([xpos, ypos, zpos], 1, 180, -60, 0, 2)
+
             self._CameraProjMatrix = p.computeProjectionMatrixFOV(80, 0.5, 0, 8)
 
 
@@ -142,7 +143,11 @@ class GymReach(gym.Env):
             #start_pos = np.random.uniform(low=-np.pi, high=np.pi, size=self.model.nq)
             raise print('random function is not completed!')
         else:
-            start_pos = [math.pi/2, math.pi, math.pi, math.pi/6, 0, math.pi/2, 0, 1, 1, 1]
+            #start_pos = [math.pi/2, math.pi, math.pi, math.pi/6, 0, math.pi/2, 0, 1, 1, 1]
+            #start_pos = [0, math.pi, 0, 0, 0, 0, 0, 1, 1, 1]
+            start_pos = [-4.54, 3.438, 9.474, 0.749, 4.628, 4.472, 5.045, 1, 1, 1]
+            start_pos = [-7.624, 2.814, 12.568, 0.758, -1.647, 4.492, 5.025, 1, 1, 1] # home position
+            start_pos = [ -7.81, 3.546, 12.883, 0.833, -2.753, 4.319, 5.917 ,1, 1, 1]  # init position
 
         return start_pos
 
@@ -188,8 +193,9 @@ class GymReach(gym.Env):
             dx = [0, -dv, dv, 0, 0, 0, 0][action]
             dy = [0, 0, 0, -dv, dv, 0, 0][action]
             da = [0, 0, 0, 0, 0, -0.05, 0.05][action]
-            f = 0.3
-            realAction = [dx, dy, -0.002, da, f]
+            f = [1]
+            orn = [0.708, -0.019, 0.037, 0.705]
+            realAction = np.concatenate(([dx, dy, -0.002], orn, f))
         else:
 
             dv = 1 if self.isAbsolute_control else 0.005
@@ -200,9 +206,10 @@ class GymReach(gym.Env):
 
 
             # Compute EndEffector Oritation: Oriented fixed direction
-            f = 0.3
+            orn = [0.708, -0.019, 0.037, 0.705]
+            f = [0.3]
 
-            realAction = [dx, dy, dz, 0, f]
+            realAction = np.concatenate(([dx, dy, dz], orn, f))
         return self.step2(realAction)
 
     def step2(self, action):

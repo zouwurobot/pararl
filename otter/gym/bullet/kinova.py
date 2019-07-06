@@ -40,7 +40,7 @@ class Kinova:
     self.maxForce = 200.
 
     self._basePosition = [-0.000000, 0.000000, 0.000000]
-    self._baseOrientation = [0.000000, 0.000000, math.pi, 1.000000]
+    self._baseOrientation = self._pybullet_client.getQuaternionFromEuler([0.000000, 0.000000, 0])
     self._init_jointPositions = init_position
 
 
@@ -67,9 +67,9 @@ class Kinova:
     #upper limits for null space
     self.ul = self.jointUpperLimit[:self.numMotors-self.numFingers]
     #joint ranges for null space
-    self.jr=[5.8, 4, 5.8, 4, 5.8, 4 ]
+    self.jr=[5.8, 4, 5.8, 4, 5.8, 4 ,4 ]
     #restposes for null space
-    self.rp=[0,0,0,0.5*math.pi,0,-math.pi*0.5*0.66 ]
+    self.rp= [0,math.pi, 0,0.5*math.pi,0,-math.pi*0.5*0.66 , 0] #[0,0,0,0.5*math.pi,0,-math.pi*0.5*0.66 ]
     #joint damping coefficents
     self.jd=[0.00001,0.00001,0.00001,0.00001,0.00001,0.00001,0.00001,0.00001,0.00001,0.00001,0.00001,0.00001,0.00001,0.00001]
 
@@ -270,7 +270,7 @@ class Kinova:
                                  self._observation_noise_stdev[2])
 
   def GetObservation(self):
-    """Get the observations of minitaur.
+    """Get the observations of kinova.
 
     It includes the angles, velocities, torques and the orientation of the base.
 
@@ -351,8 +351,8 @@ class Kinova:
       dx = motorCommands[0]
       dy = motorCommands[1]
       dz = motorCommands[2]
-      orn = motorCommands[3]
-      fingerAngle = motorCommands[4]
+      orn = motorCommands[3:7]
+      fingerAngle = motorCommands[7]
 
       ee_pos, ee_orn = self.EndEffectorObersavations()
 
@@ -379,7 +379,7 @@ class Kinova:
 
       # self.endEffectorAngle = self.endEffectorAngle + da
       pos = self.endEffectorPos
-      orn = self._pybullet_client.getQuaternionFromEuler([0, 0, 0]) # -math.pi,yaw])
+
 
 
 
@@ -453,23 +453,22 @@ class Kinova:
       x = motorCommands[0]
       y = motorCommands[1]
       z = motorCommands[2]
-      orn = motorCommands[3]
-      fingerAngle = motorCommands[4]
+      orn = motorCommands[3:7]
+      fingerAngle = motorCommands[7]
 
 
-
-      # self.endEffectorAngle = self.endEffectorAngle + da
       pos = np.array([x, y, z])
-      orn = self._pybullet_client.getQuaternionFromEuler([0, -math.pi, 0])  # -math.pi,yaw])
+      #orn = [0.072, 0.6902, -0.7172, 0.064]
+      #orn = [0.708,-0.019, 0.037, 0.705]
 
       print('pos: ', pos)
       print('obs: ', self.GetObservation()[:3])
 
       if (self.useNullSpace == 1):
         if (self.useOrientation == 1):
-          # jointPoses = self._pybullet_client.calculateInverseKinematics(self.kinovaUid, self.EndEffectorIndex, pos, orn, )
-          jointPoses = self._pybullet_client.calculateInverseKinematics(self.kinovaUid, self.EndEffectorIndex, pos, orn,
-                                                                        self.ll, self.ul, self.jr, self.rp)
+          jointPoses = self._pybullet_client.calculateInverseKinematics(self.kinovaUid, self.EndEffectorIndex, pos, orn, )
+          #jointPoses = self._pybullet_client.calculateInverseKinematics(self.kinovaUid, self.EndEffectorIndex, pos, orn,
+          #                                                              self.ll, self.ul, self.jr, self.rp)
         else:
           jointPoses = self._pybullet_client.calculateInverseKinematics(self.kinovaUid, self.EndEffectorIndex, pos,
                                                                         lowerLimits=self.ll, upperLimits=self.ul,
