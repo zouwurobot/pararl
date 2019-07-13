@@ -127,7 +127,7 @@ class GymReach(gym.Env):
                                         useInverseKinematics=True,  # IMPORTANCE! It determines the mode of the motion.
                                         torque_control_enabled=False,
                                         is_fixed=True,
-                                        init_position = self.robot_init_pos)
+                                        init_configuration = self.robot_init_pos)
         else:
             self.kinova.reset(reload_urdf=False)
 
@@ -147,7 +147,7 @@ class GymReach(gym.Env):
             #start_pos = [0, math.pi, 0, 0, 0, 0, 0, 1, 1, 1]
             start_pos = [-4.54, 3.438, 9.474, 0.749, 4.628, 4.472, 5.045, 1, 1, 1]
             start_pos = [-7.624, 2.814, 12.568, 0.758, -1.647, 4.492, 5.025, 1, 1, 1] # home position
-            start_pos = [ -7.81, 3.546, 12.883, 0.833, -2.753, 4.319, 5.917 ,1, 1, 1]  # init position
+            start_pos = [-7.81, 3.546, 12.883, 0.833, -2.753, 4.319, 5.917 ,1, 1, 1]  # init position
 
         return start_pos
 
@@ -185,14 +185,24 @@ class GymReach(gym.Env):
 
     def step(self, action):
         if (self._isDiscrete):
-
             if self.isAbsolute_control:
-                raise print('Error. Discrete mode is not used in Absolute Control.')
+                raise Exception('Error. Discrete mode is not used in Absolute Control.')
+
+            # dv = DELTA_V  # velocity per physics step.
+            # # Add noise to action
+            # dv += self.np_random.normal(0.0, scale=NOISE_STD)
+            # dx = [-dv, dv, 0, 0, 0, 0][action]
+            # dy = [0, 0, -dv, dv, 0, 0][action]
+            # dz = [0, 0, 0, 0, -dv, dv][action]
+            #
+            # finger_angle = 0.0  # Close the gripper
+            # real_action = [dx, dy, dz, 0, finger_angle]
+
 
             dv = 0.005
             dx = [0, -dv, dv, 0, 0, 0, 0][action]
             dy = [0, 0, 0, -dv, dv, 0, 0][action]
-            da = [0, 0, 0, 0, 0, -0.05, 0.05][action]
+
             f = [1]
             orn = [0.708, -0.019, 0.037, 0.705]
             realAction = np.concatenate(([dx, dy, -0.002], orn, f))
@@ -206,19 +216,20 @@ class GymReach(gym.Env):
 
 
             # Compute EndEffector Oritation: Oriented fixed direction
-            orn = [0.708, -0.019, 0.037, 0.705]
+            orn = [0.713586688041687, -0.023336926475167274, 0.037783149629831314, 0.6991579532623291]
             f = [0.3]
 
-            realAction = np.concatenate(([dx, dy, dz], orn, f))
+            realAction = np.concatenate(([dx, dy, dz],  orn, f))
         return self.step2(realAction)
 
     def step2(self, action):
-        for i in range(self._actionRepeat):
+        if self.isAbsolute_control:
+            self.kinova.ApplyAction_abs(action)
+        else:
+            print('action step: ', action)
+            self.kinova.ApplyAction(action)
 
-            if self.isAbsolute_control:
-                self.kinova.ApplyAction_abs(action)
-            else:
-                self.kinova.ApplyAction(action)
+        for i in range(self._actionRepeat):
             p.stepSimulation()
             if self._termination():
                 break
@@ -292,7 +303,8 @@ class Reach(GymWrapper):
             'default_goal': kwargs.pop('default_goal', [0.5, 0, 0.5]),
             'image_dim': kwargs.pop('image_dim', 128),
             'urdfRoot': kwargs.pop('urdfRoot', pybullet_data.getDataPath()),
-            'actionRepeat': kwargs.pop('actionRepeat', 1),
+            '_timeStep':kwargs.pop('actionRepeat', 0.01),
+            'actionRepeat': kwargs.pop('actionRepeat', 10),
             'isEnableSelfCollision': kwargs.pop('isEnableSelfCollision', True),
             '_render': kwargs.pop('_render', False),
             'isDiscrete': kwargs.pop('isDiscrete', False),

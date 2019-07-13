@@ -16,7 +16,7 @@ SENSOR_NOISE_STDDEV = (0.0, 0.0, 0.0)
 #pybullet_data.getDataPath()
 INIT_ENDEFFORTPOSITION = [0.537, 0.0, 0.5]
 INIT_ENDEFFORTANGLE = 0
-INIT_POSITION = [math.pi/2, math.pi, math.pi, math.pi/6, 0, math.pi/2, 0, 1, 1, 1]
+INIT_CONFIGURATION =  [math.pi/2, math.pi, math.pi, math.pi/6, 0, math.pi/2, 0, 1, 1, 1]
 
 
 class Kinova:
@@ -27,21 +27,24 @@ class Kinova:
                urdfRootPath=os.path.abspath('../model'),
                timeStep=0.01,
                building_env = True,
-               useInverseKinematics = False,
+               useInverseKinematics = True,
                torque_control_enabled = False,
                is_fixed = True,
-               init_position = INIT_POSITION):
+               init_configuration = INIT_CONFIGURATION,
+               verbose = True):
 
     self.robot_type = robot_type
     self._pybullet_client = pybullet_client
     self.urdfRootPath = urdfRootPath
     self.timeStep = timeStep
-    self.maxVelocity = .35  # TODO not use this, because use URDF info
-    self.maxForce = 200.
 
+
+
+
+    # the initial position of robot wrt world space. I suggest the positon be set to zero so that the local space is equvelent to the world space. It's convienent for inverse kinematics.
     self._basePosition = [-0.000000, 0.000000, 0.000000]
     self._baseOrientation = self._pybullet_client.getQuaternionFromEuler([0.000000, 0.000000, 0])
-    self._init_jointPositions = init_position
+    self._init_jointPositions = init_configuration
 
 
     self._torque_control_enabled = torque_control_enabled
@@ -50,49 +53,69 @@ class Kinova:
 
     self.useInverseKinematics = useInverseKinematics # 0
     self.useSimulation = 1
-    self.useNullSpace = 1
-    self.useOrientation = 1
+    self.useNullSpace = 1      # set 1, otherwise cause robot unstable
+    self.useOrientation = 1   # set 1, otherwise cause robot unstable
 
     self.EndEffectorLinkName = '{}_joint_end_effector'.format(self.robot_type)
     self.numFingers = int(self.robot_type[5])# to test
     self.OnlyEndEffectorObervations = useInverseKinematics
     self._is_fixed = is_fixed
+    self.verbose  = verbose
 
-    if building_env:
-      self.build_env()
-    self.reset()
 
-    #lower limits for null space
-    self.ll = self.jointLowerLimit[:self.numMotors-self.numFingers]
-    #upper limits for null space
-    self.ul = self.jointUpperLimit[:self.numMotors-self.numFingers]
-    #joint ranges for null space
-    self.jr=[5.8, 4, 5.8, 4, 5.8, 4 ,4 ]
-    #restposes for null space
-    self.rp= [0,math.pi, 0,0.5*math.pi,0,-math.pi*0.5*0.66 , 0] #[0,0,0,0.5*math.pi,0,-math.pi*0.5*0.66 ]
-    #joint damping coefficents
-    self.jd=[0.00001,0.00001,0.00001,0.00001,0.00001,0.00001,0.00001,0.00001,0.00001,0.00001,0.00001,0.00001,0.00001,0.00001]
 
-    self.ee_X_upperLimit = 0.4
-    self.ee_X_lowerLimit = 0
-    self.ee_Y_upperLimit = 0.3
-    self.ee_Y_lowerLimit = -0.3
-    self.ee_Z_upperLimit = 0.6
-    self.ee_Z_lowerLimit = 0.25
+   # kinova parameters
+    self.maxForce = 30.
+    self.max_velocity = 0.35
 
     self.fingerAForce = 2
     self.fingerBForce = 2.5
     self.fingerTipForce = 2
 
-    if self.useInverseKinematics:
-      self.endEffectorPos =  [0.537, 0.0, 0.5]
-      self.endEffectorAngle = 0
+    # reset the kinova
+    if building_env:
+      self.build_env()
+    self.reset()
 
+    # ik paramters
+    # lower limits for null space
+    self.ll = self.jointLowerLimit[:self.numMotors ]
+    # upper limits for null space
+    self.ul = self.jointUpperLimit[:self.numMotors ]
+    # joint ranges for null space
+    self.jr = [3.5, 4, 6.8, 4.8, 5.8, 4.5, 7, 0.01, 0.01, 0.01]
+    # restposes for null space
+    self.rp = [1.1, 2.8, -3.2, 0.6, -0.505, 1.9, 0.12, 0.01, 0.01, 0.01]
+    #joint damping coefficents
+    self.jd = [5, 5, 5, 5, 5, 5, 5, 0.01,0.01,0.01]
+
+    # setting the workspace wrt ee
+    self.ee_X_upperLimit = 0.2
+    self.ee_X_lowerLimit = -0.2
+    self.ee_Y_upperLimit = 0
+    self.ee_Y_lowerLimit = -0.8
+    self.ee_Z_upperLimit = 0.6
+    self.ee_Z_lowerLimit = 0.3
+
+
+
+
+
+    if self.useInverseKinematics:
+       ee_res = self.GetEndEffectorObersavations()
+       self.endEffectorPos = ee_res[0]
+       self.endEffectorOrn = ee_res[1]
+
+       self.endEffectorAngle  = self.GetTrueMotorAngles()[6]
+
+       #self.endEffectorOrn_euler = list(p.getEulerFromQuaternion(self.endEffectorOrn ))
+       #print('init ee angle :', self.GetTrueMotorAngles(), '  ,', self.endEffectorAngle )
+
+    # if use visdom to visualize states
     self.state_vis = False
     if self.state_vis:
       self.t = 0
       self.vis = visdom.Visdom(env='kinova')
-
 
   def build_env(self):
     # build env
@@ -113,7 +136,7 @@ class Kinova:
       self._GetJointInfo()
       self._ResetJointState()
 
-      # reset joint state
+      # reset joint angle
       for i in range(self.numMotors):
         self._SetDesiredMotorAngleById(self.motorIndices[i], self._init_jointPositions[i], max_velocity= 10)
     else:
@@ -121,13 +144,13 @@ class Kinova:
       self._pybullet_client.resetBaseVelocity(self.kinovaUid, [0, 0, 0], [0, 0, 0])
 
       self._ResetJointState()
-      # reset joint state
+      # reset joint ange
       for i in range(self.numMotors):
         self._SetDesiredMotorAngleById(self.motorIndices[i], self._init_jointPositions[i], max_velocity=10)
 
-    if self.useInverseKinematics:
-      self.endEffectorPos = [0.537, 0.0, 0.5]
-      self.endEffectorAngle = 0
+    if self.verbose:
+      print('reset joint angle: ', self.GetTrueMotorAngles())
+      print('reset end-effortor: ', self.GetEndEffectorObersavations())
 
   def _BuildJointNameToIdDict(self):
     num_joints = self._pybullet_client.getNumJoints(self.kinovaUid)
@@ -135,7 +158,7 @@ class Kinova:
     for i in range(num_joints):
       joint_info = self._pybullet_client.getJointInfo(self.kinovaUid, i)
       self._joint_name_to_id[joint_info[1].decode("UTF-8")] = joint_info[0]
-
+    print('joint id :', self._joint_name_to_id)
   def _GetJointInfo(self):
     self.actuator_joint = []
     self.motorNames = []
@@ -146,7 +169,8 @@ class Kinova:
     self.jointUpperLimit = []
     self.jointMaxForce = []
     self.jointMaxVelocity = []
-
+    self.paramIds = []
+    self.paramNames = []
     for i in range(self._pybullet_client.getNumJoints(self.kinovaUid)):
       joint_info = self._pybullet_client.getJointInfo(self.kinovaUid, i)
       qIndex = joint_info[3]
@@ -159,6 +183,14 @@ class Kinova:
         self.jointUpperLimit.append(joint_info[9])
         self.jointMaxForce.append(joint_info[10])
         self.jointMaxVelocity.append(joint_info[11])
+
+
+        jointName = joint_info[1]
+        jointType = joint_info[2]
+        if (jointType == p.JOINT_PRISMATIC or jointType == p.JOINT_REVOLUTE):
+          self.paramIds.append(p.addUserDebugParameter(jointName.decode("utf-8"), -4, 4, 0))
+          self.paramNames.append(jointName.decode("utf-8"))
+
     self.numMotors = len(self.motorNames)
 
     self.EndEffectorIndex = self._joint_name_to_id[self.EndEffectorLinkName]
@@ -172,6 +204,16 @@ class Kinova:
         self._init_jointPositions[i],
         targetVelocity=0)
 
+  def DebugJointControl(self):
+    for i in range(self.numMotors):
+      c = self.paramIds[i]
+      targetPos = p.readUserDebugParameter(c)
+
+      motor_id = self.motorIndices[i]
+      self._SetDesiredMotorAngleById(motor_id, targetPos)
+
+
+
   def _SetMotorTorqueById(self, motor_id, torque):
     self._pybullet_client.setJointMotorControl2(
         bodyIndex=self.kinovaUid,
@@ -180,18 +222,17 @@ class Kinova:
         force=torque)
 
   def _SetDesiredMotorAngleById(self, motor_id, desired_angle, max_velocity = None):
-    if max_velocity is None:
-        max_velocity = self.jointMaxVelocity[motor_id]
+    #if max_velocity is None:
+    #    max_velocity = self.jointMaxVelocity[motor_id]
     self._pybullet_client.setJointMotorControl2(
         bodyIndex=self.kinovaUid,
         jointIndex=motor_id,
         controlMode=self._pybullet_client.POSITION_CONTROL,
         targetPosition=desired_angle,
-        positionGain=0.3,
-        velocityGain=1,
-        maxVelocity = max_velocity,
+        positionGain= 0.3,
+        velocityGain= 1,
+        maxVelocity = 1,#self.max_velocity,
         force=self.maxForce)
-
 
   def GetActionDimension(self):
     if (self.useInverseKinematics):
@@ -269,6 +310,19 @@ class Kinova:
     return self._AddSensorNoise( np.array( self.GetTrueMotorTorques()[0: self.numMotors]),
                                  self._observation_noise_stdev[2])
 
+  def GetEndEffectorObersavations(self):
+    """Get the end effector of kinova
+
+    Returns:
+      Position of the end effecotr:[x, y, z] wrt world Cartesian space
+      Oreintation of the end effector, in quaternion form.
+    """
+    state = self._pybullet_client.getLinkState(self.kinovaUid,
+                                               self.EndEffectorIndex, computeForwardKinematics=1)
+    ee_pos = state[4]
+    ee_orn = state[5]
+
+    return np.array(ee_pos), np.array(ee_orn)
   def GetObservation(self):
     """Get the observations of kinova.
 
@@ -282,14 +336,11 @@ class Kinova:
     observation = []
 
     if self.OnlyEndEffectorObervations:
-      state = self._pybullet_client.getLinkState(self.kinovaUid,
-                                                 self.EndEffectorIndex, computeForwardKinematics=1)
-      ee_pos = state[4]
-      ee_orn = state[5]
+      ee_pos, ee_orn = self.GetEndEffectorObersavations()
       ee_euler = self._pybullet_client.getEulerFromQuaternion(ee_orn)
 
-      observation.extend(list(ee_pos))
-      observation.extend(list(ee_euler))
+      observation.extend(ee_pos.tolist())
+      observation.extend(ee_orn.tolist())
     else:
       observation.extend(self.GetMotorAngles().tolist())
       observation.extend(self.GetMotorVelocities().tolist())
@@ -297,24 +348,7 @@ class Kinova:
 
     return observation
 
-  def EndEffectorObersavations(self):
-    """Get the observations of minitaur.
 
-    It includes the angles, velocities, torques and the orientation of the base.
-
-    Returns:
-      The observation list. observation[0:8] are motor angles. observation[8:16]
-      are motor velocities, observation[16:24] are motor torques.
-      observation[24:28] is the orientation of the base, in quaternion form.
-    """
-
-
-    state = self._pybullet_client.getLinkState(self.kinovaUid,
-                                               self.EndEffectorIndex,   computeForwardKinematics=1)
-    ee_pos = state[4]
-    ee_orn = state[5]
-
-    return ee_pos, ee_orn
 
   def GetObservationUpperBound(self):
     """Get the upper bound of the observation.
@@ -345,50 +379,57 @@ class Kinova:
 
     return lower_bound
 
-  def ApplyAction(self, motorCommands):
+  def ApplyAction(self, commands):
+    """
+
+    :param commands:
+
+    1. control end-effector in Cartesian Space. useInverseKinematics is True.
+    np.array o list with size 9
+    [dx, dy, dz, orn, fingerAngle]
+    dx,dy,dz : the relative value of end-effector in Cartesian Space. Unit: meter
+    orn : the quaterion of the end-effector
+    fingerAngle : angle of the fingers
+
+    2. control joint angle derectly in joint configuration space. useInverseKinematics is False.
+    np.array o list with size 10
+    [j1,j2,...,j7, f1, f2, f3] Unit: rad
+
+    """
     if (self.useInverseKinematics):
-      
-      dx = motorCommands[0]
-      dy = motorCommands[1]
-      dz = motorCommands[2]
-      orn = motorCommands[3:7]
-      fingerAngle = motorCommands[7]
+      if np.array(commands).size != 8:
+        raise Exception("Command size is not matched, require a command with the size of 8 but got ",
+                        np.array(commands).size)
 
-      ee_pos, ee_orn = self.EndEffectorObersavations()
+      dx = commands[0]
+      dy = commands[1]
+      dz = commands[2]
 
+      orn = commands[3:7]
 
+      fingerAngle = commands[7]
 
-      self.endEffectorPos[0] = ee_pos[0]+dx
-      if (self.endEffectorPos[0]>self.ee_X_upperLimit):
-        self.endEffectorPos[0]=self.ee_X_upperLimit
-      if (self.endEffectorPos[0]< self.ee_X_lowerLimit):
-        self.endEffectorPos[0]= self.ee_X_lowerLimit
+      self.endEffectorPos[0] += dx
+      self.endEffectorPos[0] = np.clip(self.endEffectorPos[0], self.ee_X_lowerLimit, self.ee_X_upperLimit)
 
-      self.endEffectorPos[1] = ee_pos[1]+dy
-      if (self.endEffectorPos[1] < self.ee_Y_lowerLimit):
-        self.endEffectorPos[1] = self.ee_Y_lowerLimit
-      if (self.endEffectorPos[1] > self.ee_Y_upperLimit):
-        self.endEffectorPos[1] = self.ee_Y_upperLimit
+      self.endEffectorPos[1] += dy
+      self.endEffectorPos[1] = np.clip(self.endEffectorPos[1], self.ee_Y_lowerLimit, self.ee_Y_upperLimit)
 
-      self.endEffectorPos[2] = ee_pos[2]+dz
-      if (self.endEffectorPos[2] < self.ee_Z_lowerLimit):
-        self.endEffectorPos[2] = self.ee_Z_lowerLimit
-      if (self.endEffectorPos[2] > self.ee_Z_upperLimit):
-        self.endEffectorPos[2] = self.ee_Z_upperLimit
+      self.endEffectorPos[2] += dz
+      self.endEffectorPos[2] = np.clip(self.endEffectorPos[2], self.ee_Z_lowerLimit, self.ee_Z_upperLimit)
 
 
-      # self.endEffectorAngle = self.endEffectorAngle + da
       pos = self.endEffectorPos
 
 
 
+      if self.verbose:
+        ee_pos, ee_orn = self.GetEndEffectorObersavations()
+        print('end-effecter position: ',ee_pos)
+        print('end-effecter orentation ', ee_orn)
 
-      obs = self.GetObservation()[:3]
-
-      print('pos: ', pos)
-      print('obs: ', obs)
       if self.state_vis:
-
+        obs = self.GetObservation()
         self.vis.line(X=np.array([self.t]),
                       Y=np.column_stack((np.array([pos[0]]),np.array([obs[0]]))),
                       opts=dict(showlegend=True, title = 'X position'), win='X position',   update='append', )
@@ -410,85 +451,118 @@ class Kinova:
         #                       [255, 0, 0],
         #                       ]),
         #                     'title': 'Different line dash types'
-        #             } )
+        #             } )f
 
 
+      # ik
       if (self.useNullSpace==1):
         if (self.useOrientation==1):
-          #jointPoses = self._pybullet_client.calculateInverseKinematics(self.kinovaUid, self.EndEffectorIndex, pos, orn, )
-          jointPoses = self._pybullet_client.calculateInverseKinematics(self.kinovaUid,self.EndEffectorIndex,pos,orn,self.ll,self.ul,self.jr,self.rp)
+          jointPoses = self._pybullet_client.calculateInverseKinematics(self.kinovaUid,self.EndEffectorIndex,pos,orn,
+                                                                        lowerLimits=self.ll, upperLimits=self.ul,
+                                                                        jointRanges=self.jr, restPoses=self.rp,
+                                                                        residualThreshold=0.001, jointDamping=self.jd )
         else:
-          jointPoses = self._pybullet_client.calculateInverseKinematics(self.kinovaUid,self.EndEffectorIndex,pos,lowerLimits=self.ll, upperLimits=self.ul, jointRanges=self.jr, restPoses=self.rp)
-      else:
+          jointPoses = self._pybullet_client.calculateInverseKinematics(self.kinovaUid,self.EndEffectorIndex,pos,
+                                                                        lowerLimits=self.ll, upperLimits=self.ul,
+                                                                        jointRanges=self.jr, restPoses=self.rp,
+                                                                        residualThreshold=0.001, jointDamping=self.jd)
+      else: #TODO test
         if (self.useOrientation==1):
           jointPoses = self._pybullet_client.calculateInverseKinematics(self.kinovaUid,self.EndEffectorIndex,pos,orn,jointDamping=self.jd)
         else:
           jointPoses = self._pybullet_client.calculateInverseKinematics(self.kinovaUid,self.EndEffectorIndex,pos)
 
+      if self.verbose:
+        currentPosition = self.GetTrueMotorAngles()
+        print('ik joint angle results:', jointPoses)
+        print('current joint angle ', currentPosition )
 
       if (self.useSimulation):
         for i in range(self.numMotors - self.numFingers):
           motor_id = self.motorIndices[i]
           self._SetDesiredMotorAngleById(motor_id, jointPoses[i])
+
+        # end-effector angle
+        #self._SetDesiredMotorAngleById(self.motorIndices[6], self.endEffectorAngle)
+
       else:
-        #TODO test
-        #reset the joint state (ignoring all dynamics, not recommended to use during simulation)
+        #TODO test  #reset the joint state (ignoring all dynamics, not recommended to use during simulation)
         for i in range (self.numJoints):
           self._pybullet_client.resetJointState(self.kukaUid,i,jointPoses[i])
+
       #fingers
       for i in range(self.numFingers):
         finger_id = self.motorIndices[self.numMotors - self.numFingers + i]
-        self._pybullet_client.setJointMotorControl2(self.kinovaUid,finger_id,self._pybullet_client.POSITION_CONTROL,targetPosition= fingerAngle,  force=self.fingerTipForce)
+        self._pybullet_client.setJointMotorControl2(self.kinovaUid,finger_id,self._pybullet_client.POSITION_CONTROL,
+                                                    targetPosition= fingerAngle,  force=self.fingerTipForce)
 
-    else:
-      assert np.array(motorCommands).size == self.numMotors
+    else:# TODO test
+      if np.array(commands).size != self.numMotors:  # 10 for j2n7s300
+        raise Exception("Command size is not matched, require a command with the size of ", self.numMotors, " but got ", np.array(commands).size)
       for i in range (self.numMotors):
-
         motor_id = self.motorIndices[i]
-        self._SetDesiredMotorAngleById(motor_id, motorCommands[i])
+        self._SetDesiredMotorAngleById(motor_id, commands[i])
 
-  def ApplyAction_abs(self, motorCommands):
+  def ApplyAction_EndEffectorPose(self, commands):
     if (self.useInverseKinematics):
+      if np.array(commands).size != 8:
+        raise Exception("Command size is not matched, require a command with the size of 8 but got ",
+                        np.array(commands).size)
+      x = commands[0]
+      y = commands[1]
+      z = commands[2]
+      orn = commands[3:7]
+      fingerAngle = commands[7]
 
-      x = motorCommands[0]
-      y = motorCommands[1]
-      z = motorCommands[2]
-      orn = motorCommands[3:7]
-      fingerAngle = motorCommands[7]
 
+      self.endEffectorPos[0] = x
+      self.endEffectorPos[0] = np.clip(self.endEffectorPos[0], self.ee_X_lowerLimit, self.ee_X_upperLimit)
 
-      pos = np.array([x, y, z])
-      #orn = [0.072, 0.6902, -0.7172, 0.064]
-      #orn = [0.708,-0.019, 0.037, 0.705]
+      self.endEffectorPos[1] = y
+      self.endEffectorPos[1] = np.clip(self.endEffectorPos[1], self.ee_Y_lowerLimit, self.ee_Y_upperLimit)
 
-      print('pos: ', pos)
-      print('obs: ', self.GetObservation()[:3])
+      self.endEffectorPos[2] = z
+      self.endEffectorPos[2] = np.clip(self.endEffectorPos[2], self.ee_Z_lowerLimit, self.ee_Z_upperLimit)
 
+      pos = self.endEffectorPos
+
+      if self.verbose:
+        ee_pos, ee_orn = self.GetEndEffectorObersavations()
+        print('end-effecter position: ', ee_pos)
+        print('end-effecter orentation ', ee_orn)
+
+      if self.state_vis:
+        self.vis.line(X=np.array([self.t]),
+                      Y=np.column_stack((np.array([pos[0]]), np.array([obs[0]]))),
+                      opts=dict(showlegend=True, title='X position'), win='X position', update='append', )
+        self.vis.line(X=np.array([self.t]),
+                      Y=np.column_stack((np.array([pos[1]]), np.array([obs[1]]))),
+                      opts=dict(showlegend=True, title='Y position'), win='Y position', update='append', )
+        self.vis.line(X=np.array([self.t]),
+                      Y=np.column_stack((np.array([pos[2]]), np.array([obs[2]]))),
+                      opts=dict(showlegend=True, title='Z position'), win='Z position', update='append', )
+        self.t += 0.01
+
+      # ik
       if (self.useNullSpace == 1):
         if (self.useOrientation == 1):
-          jointPoses = self._pybullet_client.calculateInverseKinematics(self.kinovaUid, self.EndEffectorIndex, pos, orn, )
-          #jointPoses = self._pybullet_client.calculateInverseKinematics(self.kinovaUid, self.EndEffectorIndex, pos, orn,
-          #                                                              self.ll, self.ul, self.jr, self.rp)
+          jointPoses = self._pybullet_client.calculateInverseKinematics(self.kinovaUid, self.EndEffectorIndex, pos, orn,
+                                                                        lowerLimits=self.ll, upperLimits=self.ul,
+                                                                        jointRanges=self.jr, restPoses=self.rp,
+                                                                        residualThreshold=0.001, jointDamping=self.jd)
         else:
           jointPoses = self._pybullet_client.calculateInverseKinematics(self.kinovaUid, self.EndEffectorIndex, pos,
                                                                         lowerLimits=self.ll, upperLimits=self.ul,
-                                                                        jointRanges=self.jr, restPoses=self.rp)
-      else:
-        if (self.useOrientation == 1):
-          jointPoses = self._pybullet_client.calculateInverseKinematics(self.kinovaUid, self.EndEffectorIndex, pos, orn,
-                                                                        jointDamping=self.jd)
+                                                                        jointRanges=self.jr, restPoses=self.rp,
+                                                                        residualThreshold=0.001, jointDamping=self.jd)
+        if (self.useSimulation):
+          for i in range(self.numMotors - self.numFingers):
+            motor_id = self.motorIndices[i]
+            self._SetDesiredMotorAngleById(motor_id, jointPoses[i])
         else:
-          jointPoses = self._pybullet_client.calculateInverseKinematics(self.kinovaUid, self.EndEffectorIndex, pos)
-
-      if (self.useSimulation):
-        for i in range(self.numMotors - self.numFingers):
-          motor_id = self.motorIndices[i]
-          self._SetDesiredMotorAngleById(motor_id, jointPoses[i], 5)
-      else:
-        # TODO test
-        # reset the joint state (ignoring all dynamics, not recommended to use during simulation)
-        for i in range(self.numJoints):
-          self._pybullet_client.resetJointState(self.kukaUid, i, jointPoses[i])
+          # TODO test  #reset the joint state (ignoring all dynamics, not recommended to use during simulation)
+          for i in range(self.numJoints):
+            self._pybullet_client.resetJointState(self.kukaUid, i, jointPoses[i])
       # fingers
       for i in range(self.numFingers):
         finger_id = self.motorIndices[self.numMotors - self.numFingers + i]
@@ -496,8 +570,5 @@ class Kinova:
                                                     targetPosition=fingerAngle, force=self.fingerTipForce)
 
     else:
-      assert np.array(motorCommands).size == self.numMotors
-      for i in range(self.numMotors):
-        motor_id = self.motorIndices[i]
-        self._SetDesiredMotorAngleById(motor_id, motorCommands[i])
+      raise Exception("You must set \'useInverseKinematics==True\' in the ApplyAction_EndEffectorPose function.")
       
