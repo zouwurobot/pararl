@@ -8,7 +8,7 @@ class GymWrapper(ParasolEnvironment):
     version = 1
 
     def __init__(self, config):
-        env_name = "Parasol%s-v%u" % (self.environment_name, self.version)
+        env_name = "Otter%s-v%u" % (self.environment_name, self.version)
         register(
             id=env_name,
             entry_point=self.entry_point,

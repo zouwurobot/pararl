@@ -31,14 +31,12 @@ class Kinova:
                torque_control_enabled = False,
                is_fixed = True,
                init_configuration = INIT_CONFIGURATION,
-               verbose = True):
+               verbose = False):
 
     self.robot_type = robot_type
     self._pybullet_client = pybullet_client
     self.urdfRootPath = urdfRootPath
     self.timeStep = timeStep
-
-
 
 
     # the initial position of robot wrt world space. I suggest the positon be set to zero so that the local space is equvelent to the world space. It's convienent for inverse kinematics.
@@ -61,8 +59,6 @@ class Kinova:
     self.OnlyEndEffectorObervations = useInverseKinematics
     self._is_fixed = is_fixed
     self.verbose  = verbose
-
-
 
    # kinova parameters
     self.maxForce = 30.
@@ -96,9 +92,6 @@ class Kinova:
     self.ee_Y_lowerLimit = -0.8
     self.ee_Z_upperLimit = 0.6
     self.ee_Z_lowerLimit = 0.3
-
-
-
 
 
     if self.useInverseKinematics:
@@ -420,8 +413,6 @@ class Kinova:
 
 
       pos = self.endEffectorPos
-
-
 
       if self.verbose:
         ee_pos, ee_orn = self.GetEndEffectorObersavations()

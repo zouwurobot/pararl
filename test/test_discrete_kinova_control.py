@@ -1,9 +1,3 @@
-"""
-Use this script to control the env with your keyboard.
-For this script to work, you need to have the PyGame window in focus.
-
-See/modify `char_to_action` to set the key-to-action mapping.
-"""
 import sys
 import gym
 
@@ -30,18 +24,15 @@ screen = pygame.display.set_mode((400, 300))
 
 
 char_to_action = {
-    'w': np.array([0, -1, 0, 0]),
-    'a': np.array([1, 0, 0, 0]),
-    's': np.array([0, 1, 0, 0]),
-    'd': np.array([-1, 0, 0, 0]),
+    '0': 0,
+    '1': 1,
+    '2': 2,
+    '3': 3,
 
-    'q': np.array([1, -1, 0, 0]),
-    'e': np.array([-1, -1, 0, 0]),
-    'z': np.array([1, 1, 0, 0]),
-    'c': np.array([-1, 1, 0, 0]),
-    'k': np.array([0, 0, 1, 0]),
-    'j': np.array([0, 0, -1, 0]),
-
+    '4': 4,
+    '5': 5,
+    '6': 6,
+    '7': 7,
 
     'h': 'close',
     'l': 'open',
@@ -49,13 +40,17 @@ char_to_action = {
     'r': 'reset',
     'p': 'put obj in hand',
 }
+
 import pygame
 
 import otter.gym as gym
 import numpy as np
 
+
 env_params = {
-    "environment_name": "ImageKinovaReacherXYZEnv-v0",  #Reach
+    "environment_name": "ImageKinovaReacherXYZEnv-v0",
+    "isDiscrete":True,
+    "isAbsolute_control":False,
     "random_start": False,
     "random_target": False,
 
@@ -63,26 +58,20 @@ env_params = {
     "image_dim": 128,
     "goal_point": [0.5, 0, 0.5],
     'isAbsolute_control': False,
-    "reward_test":1.66
 
 }
-data_params=dict(
-        num_rollouts=10,
-        init_std=0.5,
-        smooth_noise=False,
-    )
-horizon = 50
+
 
 env = gym.from_config(env_params)
 
-NDIM = env.gym_env.action_space.low.size
+#NDIM = env.gym_env.action_space.low.size
 lock_action = False
 obs = env.reset()
-action = np.zeros(10)
+action = 0
 while True:
     done = False
     if not lock_action:
-        action[:3] = 0
+        action  = 0
     for event in pygame.event.get():
         event_happened = True
         if event.type == QUIT:
@@ -94,24 +83,16 @@ while True:
                 lock_action = not lock_action
             elif new_action == 'reset':
                 done = True
-            elif new_action == 'close':
-                action[3] = 1
-            elif new_action == 'open':
-                action[3] = -1
-            elif new_action == 'put obj in hand':
-                print("putting obj in hand")
-                env.put_obj_in_hand()
-                action[3] = 1
+
+
             elif new_action is not None:
-                action[:3] = new_action[:3]
+                action  = new_action
             else:
-                action = np.zeros(3)
+                action = 0
     print('______________________')
     print('actions: ', action)
-    obs, reward, done, _ = env.step(action[:3])
+    obs, reward, done, _ = env.step(action)
     if done:
         obs = env.reset()
     env.render()
     print( 'reward :', reward)
-
-

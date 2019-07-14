@@ -24,7 +24,7 @@ largeValObservation = 100
 RENDER_HEIGHT = 480
 RENDER_WIDTH = 480
 
-N_DISCRETE_ACTIONS = 6 # depends on tasks
+N_DISCRETE_ACTIONS = 7 # depends on tasks
 DELTA_V = 0.01
 NOISE_STD_DISCRETE = 0.002  # Add noise to actions, so the env is not fully deterministic  0.01
 
@@ -52,10 +52,11 @@ CAM_ROLL_2RD = 0
 
 from ..gym_wrapper import GymWrapper
 
-__all__ = ['Reach', 'GymReach']
+__all__ = ['KinovaXYZ']
 
 
-class GymReach(gym.Env, metaclass=abc.ABCMeta,):
+class KinovaXYZ(gym.Env, metaclass=abc.ABCMeta,):
+
     metadata = {
         'render.modes': ['human', 'rgb_array'],
         'video.frames_per_second': 50
@@ -77,7 +78,32 @@ class GymReach(gym.Env, metaclass=abc.ABCMeta,):
                  random_target=False,
                  default_goal = (0,0,0),
                  random_init_arm_angle = False,
+
+                 image_height = RENDER_HEIGHT,
+                 image_width=RENDER_WIDTH,
                  *args, **kwargs):
+        """
+
+        :param isDiscrete:  whether to use discrete mode to control the ee
+        :param isAbsolute_control: wheter to use absolute positon of ee to control (just for debug)
+        :param timeStep: the physics step time, e.g. 0.01
+        :param urdfRoot: the path of robot urdf
+        :param actionRepeat: the step times of each action, which can adjust the control rate
+        :param isEnableSelfCollision: whether to avoid collison
+        :param isRender: whether to render during simulation
+        :param maxSteps: the maximum of physics steps for each episode
+        :param debug: True could adjust some parameters, e.g:camera or sth.
+        :param multi_view: open the second camera
+        :param hard_reset: if true, the urdf of robot and env will be loaded again after reset
+        :param isImageObservation: if true, observation is raw iamges
+        :param random_target: whether to random the target positon
+        :param default_goal: the default positon of the target
+        :param random_init_arm_angle: whether to random the initial angle of the robot
+        :param image_height:
+        :param image_width:
+        :param args:
+        :param kwargs:
+        """
         self.__dict__.update(kwargs)
         self._isDiscrete = isDiscrete
         self._isAbsolute_control = isAbsolute_control
@@ -102,8 +128,6 @@ class GymReach(gym.Env, metaclass=abc.ABCMeta,):
         self._envStepCounter = 0
         self.hard_reset = hard_reset
 
-
-
         self.camera_target_pos = CAMERA_TARGET_POS
         self._cam_dist = CAM_DIS
         self._cam_yaw = CAM_YAW
@@ -111,7 +135,8 @@ class GymReach(gym.Env, metaclass=abc.ABCMeta,):
         self._cam_roll = CAM_ROLL
         self.renderer = p.ER_BULLET_HARDWARE_OPENGL  #p.ER_TINY_RENDERER  #
 
-
+        self._image_height = image_height
+        self._image_width = image_width
         GUI_FLAG = False
         self._p = p
         if self._renders:
@@ -211,7 +236,7 @@ class GymReach(gym.Env, metaclass=abc.ABCMeta,):
                     nearVal=0.1, farVal=100.0)
 
             self.robot_init_pos = self.get_init_joint_angle()
-            self.goal_point = self.get_target_pos()
+            #self.goal_point = self.get_target_pos()
 
             # load the kinova
             self.kinova = kinova.Kinova(p,  robot_type='j2s7s300',
@@ -244,12 +269,12 @@ class GymReach(gym.Env, metaclass=abc.ABCMeta,):
 
         return start_pos
 
-    def get_target_pos(self):
-        if self._random_target:
-            goal = np.array([self.np_random.uniform(-0.2, 0.2), self.np_random.uniform(-0.2, 0.2)])
-        else:
-            goal = np.array(self._default_goal)
-        return goal
+    # def get_target_pos(self):
+    #     if self._random_target:
+    #         self.goal_point = np.array([self.np_random.uniform(-0.2, 0.2), self.np_random.uniform(-0.2, 0.2)])
+    #     else:
+    #         self.goal_point = np.array(self._default_goal)
+    #     return self.goal_point
 
     def __del__(self):
         p.disconnect()
@@ -282,9 +307,9 @@ class GymReach(gym.Env, metaclass=abc.ABCMeta,):
             dv = DELTA_V  # velocity per physics step.
             # Add noise to action
             dv += self.np_random.normal(0.0, scale=NOISE_STD_DISCRETE)
-            dx = [-dv, dv, 0, 0, 0, 0][action]
-            dy = [0, 0, -dv, dv, 0, 0][action]
-            dz = [0, 0, 0, 0, -dv, dv][action]
+            dx = [0,-dv, dv, 0, 0, 0, 0][action]
+            dy = [0, 0, 0, -dv, dv, 0, 0][action]
+            dz = [0, 0, 0, 0, 0, -dv, dv][action]
 
             realAction = np.concatenate(([dx, dy, dz], orn, finger_angle))
         else:
@@ -305,11 +330,12 @@ class GymReach(gym.Env, metaclass=abc.ABCMeta,):
         return self.step2(realAction)
 
     def step2(self, action):
+        if self._isAbsolute_control:
+            self.kinova.ApplyAction_EndEffectorPose(action)
+        else:
+            self.kinova.ApplyAction(action)
         for i in range(self._actionRepeat):
-            if self._isAbsolute_control:
-                self.kinova.ApplyAction_EndEffectorPose(action)
-            else:
-                self.kinova.ApplyAction(action)
+
 
             p.stepSimulation()
             if self._termination():
@@ -385,118 +411,3 @@ class GymReach(gym.Env, metaclass=abc.ABCMeta,):
         reward_ctrl = -np.linalg.norm(action) * 10
         dist = -obs
         return 0
-
-
-class KinovaReacher(GymReach):
-    def __init__(self, **kwargs):
-
-        GymReach.__init__(self,  **kwargs)
-
-    def _reward(self, obs, action):
-
-        # if contact_with_table or self.n_contacts >= N_CONTACTS_BEFORE_TERMINATION \
-        #         or self.n_steps_outside >= N_STEPS_OUTSIDE_SAFETY_SPHERE:
-        #     self.terminated = True
-        return 1.111
-
-class Reach(GymWrapper):
-    environment_name = 'Reach'
-    entry_point = "otter.gym.bullet.reach:KinovaReacher"
-    max_episode_steps = 1000
-    reward_threshold = -3.75
-
-    def __init__(self, **kwargs):
-        config = {
-            'isDiscrete': kwargs.pop('isDiscrete', False),
-            'isAbsolute_control':kwargs.pop('isAbsolute_control', False),
-            'timeStep': kwargs.pop('timeStep', 0.01),
-            'actionRepeat': kwargs.pop('actionRepeat', 10),
-            'isEnableSelfCollision': kwargs.pop('isEnableSelfCollision', True),
-            'urdfRoot': kwargs.pop('urdfRoot', pybullet_data.getDataPath()),
-            'isRender': kwargs.pop('isRender', True),
-            'maxSteps': kwargs.pop('maxSteps', 1000),
-            'debug': kwargs.pop('debug', True),
-            'multi_view': kwargs.pop('multi_view', False),
-            'hard_reset': kwargs.pop('hard_reset', False),
-
-            'isImageObservation': kwargs.pop('isImageObservation', False),
-            'random_target': kwargs.pop('random_target', False),
-            'random_init_arm_angle': kwargs.pop('random_init_arm_angle', False),
-            'default_goal': kwargs.pop('default_goal', [0.5, 0, 0.5]),
-
-            'image': kwargs.pop('image', True),
-            'sliding_window': kwargs.pop('sliding_window', 0),
-        }
-        super(Reach, self).__init__(config)
-
-    def torque_matrix(self):
-        return 2 * np.eye(self.get_action_dim())
-
-    def make_summary(self, observations, name):
-        if self.image:
-            pass
-            # observations = T.reshape(observations, [-1] + self.image_size())
-            # T.core.summary.image(name, observations)
-
-    def is_image(self):
-        return self.image
-
-    def image_size(self):
-        if self.image:
-            return [self.image_dim, self.image_dim, 3]
-        return None
-
-    def cost_fn(self, s, a):
-        return np.linalg.norm(s[:,-3:], axis=-1) + np.sum(np.square(a), axis=-1)
-
-# class Reach(GymWrapper):
-#     environment_name = 'Reach'
-#     entry_point = "otter.gym.bullet.reach:GymReach"
-#     max_episode_steps = 50
-#     reward_threshold = -3.75
-#
-#     def __init__(self, **kwargs):
-#         config = {
-#             'isDiscrete': kwargs.pop('isDiscrete', False),
-#             'isAbsolute_control':kwargs.pop('isAbsolute_control', False),
-#             'timeStep': kwargs.pop('timeStep', 0.01),
-#             'actionRepeat': kwargs.pop('actionRepeat', 10),
-#             'isEnableSelfCollision': kwargs.pop('isEnableSelfCollision', True),
-#             'urdfRoot': kwargs.pop('urdfRoot', pybullet_data.getDataPath()),
-#             'isRender': kwargs.pop('isRender', True),
-#             'maxSteps': kwargs.pop('maxSteps', 1000),
-#             'debug': kwargs.pop('debug', True),
-#             'multi_view': kwargs.pop('multi_view', False),
-#             'hard_reset': kwargs.pop('hard_reset', False),
-#
-#             'isImageObservation': kwargs.pop('isImageObservation', False),
-#             'random_target': kwargs.pop('random_target', False),
-#             'random_init_arm_angle': kwargs.pop('random_init_arm_angle', False),
-#             'default_goal': kwargs.pop('default_goal', [0.5, 0, 0.5]),
-#
-#             'image': kwargs.pop('image', True),
-#             'sliding_window': kwargs.pop('sliding_window', 0),
-#         }
-#         super(Reach, self).__init__(config)
-#
-#     def torque_matrix(self):
-#         return 2 * np.eye(self.get_action_dim())
-#
-#     def make_summary(self, observations, name):
-#         if self.image:
-#             pass
-#             # observations = T.reshape(observations, [-1] + self.image_size())
-#             # T.core.summary.image(name, observations)
-#
-#     def is_image(self):
-#         return self.image
-#
-#     def image_size(self):
-#         if self.image:
-#             return [self.image_dim, self.image_dim, 3]
-#         return None
-#
-#     def cost_fn(self, s, a):
-#         return np.linalg.norm(s[:,-3:], axis=-1) + np.sum(np.square(a), axis=-1)
-
-
