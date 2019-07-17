@@ -18,6 +18,13 @@ INIT_ENDEFFORTPOSITION = [0.537, 0.0, 0.5]
 INIT_ENDEFFORTANGLE = 0
 INIT_CONFIGURATION =  [math.pi/2, math.pi, math.pi, math.pi/6, 0, math.pi/2, 0, 1, 1, 1]
 
+X_HIGH = 0.3
+X_LOW = -0.3
+Y_HIGH = -0.3
+Y_LOW = -0.85
+Z_HIGH = 0.6
+Z_LOW = 0.2
+
 
 class Kinova:
   #TODO urdf path
@@ -31,7 +38,13 @@ class Kinova:
                torque_control_enabled = False,
                is_fixed = True,
                init_configuration = INIT_CONFIGURATION,
-               verbose = False):
+               verbose = False,
+               state_vis= False,
+               robot_info_debug= False,
+
+               hand_low= (X_LOW, Y_LOW, Z_LOW),
+               hand_high = (X_HIGH, Y_HIGH, Z_HIGH),
+               ):
 
     self.robot_type = robot_type
     self._pybullet_client = pybullet_client
@@ -59,6 +72,7 @@ class Kinova:
     self.OnlyEndEffectorObervations = useInverseKinematics
     self._is_fixed = is_fixed
     self.verbose  = verbose
+    self._robot_info_debug = robot_info_debug
 
    # kinova parameters
     self.maxForce = 30.
@@ -86,17 +100,17 @@ class Kinova:
     self.jd = [5, 5, 5, 5, 5, 5, 5, 0.01,0.01,0.01]
 
     # setting the workspace wrt ee
-    self.ee_X_upperLimit = 0.2
-    self.ee_X_lowerLimit = -0.2
-    self.ee_Y_upperLimit = 0
-    self.ee_Y_lowerLimit = -0.8
-    self.ee_Z_upperLimit = 0.6
-    self.ee_Z_lowerLimit = 0.3
+    self.ee_X_upperLimit = hand_high[0]
+    self.ee_X_lowerLimit = hand_low[0]
+    self.ee_Y_upperLimit = hand_high[1]
+    self.ee_Y_lowerLimit = hand_low[1]
+    self.ee_Z_upperLimit = hand_high[2]
+    self.ee_Z_lowerLimit = hand_low[2]
 
 
     if self.useInverseKinematics:
        ee_res = self.GetEndEffectorObersavations()
-       self.endEffectorPos = ee_res[0]
+       self.endEffectorPos = [0.09, -0.4, 0.4]#ee_res[0]
        self.endEffectorOrn = ee_res[1]
 
        self.endEffectorAngle  = self.GetTrueMotorAngles()[6]
@@ -105,7 +119,7 @@ class Kinova:
        #print('init ee angle :', self.GetTrueMotorAngles(), '  ,', self.endEffectorAngle )
 
     # if use visdom to visualize states
-    self.state_vis = False
+    self.state_vis = state_vis
     if self.state_vis:
       self.t = 0
       self.vis = visdom.Visdom(env='kinova')
@@ -120,7 +134,7 @@ class Kinova:
   def reset(self, reload_urdf=True):
     if reload_urdf:
       self.kinovaUid = self._pybullet_client.loadURDF(
-                          os.path.join(self.urdfRootPath,"j2s7s300.urdf"),
+                          os.path.join(self.urdfRootPath,"urdf/j2s7s300.urdf"),
                           self._basePosition,self._baseOrientation,
                           useFixedBase=self._is_fixed,
                           flags=self._pybullet_client.URDF_USE_SELF_COLLISION)
@@ -144,6 +158,14 @@ class Kinova:
     if self.verbose:
       print('reset joint angle: ', self.GetTrueMotorAngles())
       print('reset end-effortor: ', self.GetEndEffectorObersavations())
+
+
+    if self._robot_info_debug:
+
+      self.Xpos_info = self._pybullet_client.addUserDebugText('x:', [-0.8, 0, 0.6], textColorRGB=[1, 0, 0], textSize=1.5 )
+      self.Ypos_info = self._pybullet_client.addUserDebugText('y:', [-0.8, 0, 0.5], textColorRGB=[1, 0, 0], textSize=1.5)
+      self.Zpos_info = self._pybullet_client.addUserDebugText('z:', [-0.8, 0, 0.4], textColorRGB=[1, 0, 0], textSize=1.5)
+
 
   def _BuildJointNameToIdDict(self):
     num_joints = self._pybullet_client.getNumJoints(self.kinovaUid)
@@ -222,7 +244,7 @@ class Kinova:
         jointIndex=motor_id,
         controlMode=self._pybullet_client.POSITION_CONTROL,
         targetPosition=desired_angle,
-        positionGain= 0.3,
+        positionGain= 0.5,
         velocityGain= 1,
         maxVelocity = 1,#self.max_velocity,
         force=self.maxForce)
@@ -411,24 +433,24 @@ class Kinova:
       self.endEffectorPos[2] += dz
       self.endEffectorPos[2] = np.clip(self.endEffectorPos[2], self.ee_Z_lowerLimit, self.ee_Z_upperLimit)
 
-
       pos = self.endEffectorPos
 
+      ee_pos, ee_orn = self.GetEndEffectorObersavations()
       if self.verbose:
-        ee_pos, ee_orn = self.GetEndEffectorObersavations()
+
         print('end-effecter position: ',ee_pos)
         print('end-effecter orentation ', ee_orn)
 
       if self.state_vis:
-        obs = self.GetObservation()
+        ee_pos, ee_orn = self.GetEndEffectorObersavations()
         self.vis.line(X=np.array([self.t]),
-                      Y=np.column_stack((np.array([pos[0]]),np.array([obs[0]]))),
+                      Y=np.column_stack((np.array([pos[0]]),np.array([ee_pos[0]]))),
                       opts=dict(showlegend=True, title = 'X position'), win='X position',   update='append', )
         self.vis.line(X=np.array([self.t]),
-                      Y=np.column_stack((np.array([pos[1]]), np.array([obs[1]]))),
+                      Y=np.column_stack((np.array([pos[1]]), np.array([ee_pos[1]]))),
                       opts=dict(showlegend=True, title='Y position'), win='Y position', update='append', )
         self.vis.line(X=np.array([self.t]),
-                      Y=np.column_stack((np.array([pos[2]]), np.array([obs[2]]))),
+                      Y=np.column_stack((np.array([pos[2]]), np.array([ee_pos[2]]))),
                       opts=dict(showlegend=True, title='Z position'), win='Z position', update='append', )
         self.t += 0.01
 
@@ -444,6 +466,15 @@ class Kinova:
         #                     'title': 'Different line dash types'
         #             } )f
 
+
+      if self._robot_info_debug:
+        x_pos = "x: %.3f" %ee_pos[0]
+        y_pos = "y: %.3f" % ee_pos[1]
+        z_pos = "z: %.3f" % ee_pos[2]
+
+        self._pybullet_client.addUserDebugText(x_pos,  [-0.8, 0, 0.6], textColorRGB=[1, 0, 0], textSize=1.5 ,  replaceItemUniqueId =self.Xpos_info)
+        self._pybullet_client.addUserDebugText(y_pos, [-0.8, 0, 0.5], textColorRGB=[1, 0, 0], textSize=1.5 , replaceItemUniqueId=self.Ypos_info)
+        self._pybullet_client.addUserDebugText(z_pos, [-0.8, 0, 0.4], textColorRGB=[1, 0, 0], textSize=1.5 ,replaceItemUniqueId=self.Zpos_info)
 
       # ik
       if (self.useNullSpace==1):
@@ -523,14 +554,15 @@ class Kinova:
         print('end-effecter orentation ', ee_orn)
 
       if self.state_vis:
+        ee_pos, ee_orn = self.GetEndEffectorObersavations()
         self.vis.line(X=np.array([self.t]),
-                      Y=np.column_stack((np.array([pos[0]]), np.array([obs[0]]))),
+                      Y=np.column_stack((np.array([pos[0]]), np.array([ee_pos[0]]))),
                       opts=dict(showlegend=True, title='X position'), win='X position', update='append', )
         self.vis.line(X=np.array([self.t]),
-                      Y=np.column_stack((np.array([pos[1]]), np.array([obs[1]]))),
+                      Y=np.column_stack((np.array([pos[1]]), np.array([ee_pos[1]]))),
                       opts=dict(showlegend=True, title='Y position'), win='Y position', update='append', )
         self.vis.line(X=np.array([self.t]),
-                      Y=np.column_stack((np.array([pos[2]]), np.array([obs[2]]))),
+                      Y=np.column_stack((np.array([pos[2]]), np.array([ee_pos[2]]))),
                       opts=dict(showlegend=True, title='Z position'), win='Z position', update='append', )
         self.t += 0.01
 
@@ -540,12 +572,12 @@ class Kinova:
           jointPoses = self._pybullet_client.calculateInverseKinematics(self.kinovaUid, self.EndEffectorIndex, pos, orn,
                                                                         lowerLimits=self.ll, upperLimits=self.ul,
                                                                         jointRanges=self.jr, restPoses=self.rp,
-                                                                        residualThreshold=0.001, jointDamping=self.jd)
+                                                                        residualThreshold=0.0001, jointDamping=self.jd)
         else:
           jointPoses = self._pybullet_client.calculateInverseKinematics(self.kinovaUid, self.EndEffectorIndex, pos,
                                                                         lowerLimits=self.ll, upperLimits=self.ul,
                                                                         jointRanges=self.jr, restPoses=self.rp,
-                                                                        residualThreshold=0.001, jointDamping=self.jd)
+                                                                        residualThreshold=0.0001, jointDamping=self.jd)
         if (self.useSimulation):
           for i in range(self.numMotors - self.numFingers):
             motor_id = self.motorIndices[i]

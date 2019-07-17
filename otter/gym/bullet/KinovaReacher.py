@@ -70,9 +70,10 @@ class ImageKinovaReacherXYZEnv(GymWrapper):
             'urdfRoot': kwargs.pop('urdfRoot', pybullet_data.getDataPath()),
             'isRender': kwargs.pop('isRender', True),
             'maxSteps': kwargs.pop('maxSteps', 1000),
-            'debug': kwargs.pop('debug', True),
+            'debug': kwargs.pop('debug', False),
             'multi_view': kwargs.pop('multi_view', False),
             'hard_reset': kwargs.pop('hard_reset', False),
+            'state_vis': kwargs.pop('state_vis', False),
 
             'isImageObservation': kwargs.pop('isImageObservation', True),
             'random_target': kwargs.pop('random_target', False),

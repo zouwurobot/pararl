@@ -125,7 +125,7 @@ class Myexp(Experiment):
         rollouts = (
             rollouts[0],
             rollouts[1],
-            rollouts[2] - 0.5 * np.einsum('nta,ab,ntb->nt', rollouts[1], self.env.torque_matrix(), rollouts[1]),
+            rollouts[2],# - 0.5 * np.einsum('nta,ab,ntb->nt', rollouts[1], self.env.torque_matrix(), rollouts[1])
             rollouts[3]
         )
 

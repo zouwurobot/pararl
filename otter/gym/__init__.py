@@ -3,7 +3,7 @@ with contextlib.redirect_stdout(None):
     from .bullet import *
     from .basic import *
 
-ENVS = [CupPush, Reach, SimpleCar, ImageKinovaReacherXYZEnv]
+ENVS = [CupPush, Reach, SimpleCar, ImageKinovaReacherXYZEnv, ImageKinovaCupPusherEnv]
 
 ENV_MAP = { env.environment_name : env for env in ENVS }
 

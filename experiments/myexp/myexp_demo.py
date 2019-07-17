@@ -3,23 +3,25 @@ from otter.experiment import run
 import otter.gym as gym
 
 env_params = {
-      "environment_name": "Reach",
-    "random_start": True,
-    "random_target": True,
+      "environment_name": "ImageKinovaCupPusherEnv-v0",
+
+    "random_init_cup_position": True,
+    "random_target_position": True,
+
     "image": True,
-    "image_dim": 128,
-    "goal_point": [0.5, 0, 0.5],
-    '_render': False
+    "image_dim": 48,
+
+    'isRender': True
 }
 
-env = gym.from_config(env_params)
-do = env.get_state_dim()
+#env = gym.from_config(env_params)
+do = 0#env.get_state_dim()
 ds = 10
-du = da = env.get_action_dim()
-horizon = 50
+du = da = 0#env.get_action_dim()
 
+horizon=50
 experiment = dict(
-    experiment_name='reacher-image',
+    experiment_name='kinova-image',
     experiment_type='myexp',
     env=env_params,
     model=dict(
@@ -37,7 +39,7 @@ experiment = dict(
     train=dict(
         num_epochs=1000,
         learning_rate=1e-3,
-        model_learning_rate=2e-5 * horizon,
+        model_learning_rate=2e-5 * 50,
         beta_start=1e-4,
         beta_end=10.0,
         beta_rate=5e-5,

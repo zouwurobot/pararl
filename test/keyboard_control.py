@@ -55,17 +55,19 @@ import otter.gym as gym
 import numpy as np
 
 env_params = {
-    "environment_name": "ImageKinovaReacherXYZEnv-v0",  #Reach
-    "random_start": False,
-    "random_target": False,
+    "environment_name": "ImageKinovaCupPusherEnv-v0",
+
+    "random_init_cup_position": True,
+    "random_target_position": True,
 
     "image": True,
     "image_dim": 128,
-    "goal_point": [0.5, 0, 0.5],
-    'isAbsolute_control': False,
-    "reward_test":1.66
 
+    'isRender': True,
+
+    'debug': True
 }
+
 data_params=dict(
         num_rollouts=10,
         init_std=0.5,
@@ -77,7 +79,9 @@ env = gym.from_config(env_params)
 
 NDIM = env.gym_env.action_space.low.size
 lock_action = False
+t1 = time.time()
 obs = env.reset()
+
 action = np.zeros(10)
 while True:
     done = False
@@ -106,12 +110,18 @@ while True:
                 action[:3] = new_action[:3]
             else:
                 action = np.zeros(3)
-    print('______________________')
-    print('actions: ', action)
+    #print('______________________')
+    #print('actions: ', action)
     obs, reward, done, _ = env.step(action[:3])
+
+    #print("state info :", obs.shape)
+
     if done:
+        t2 = time.time()
+        print('total time :', t2 - t1)
         obs = env.reset()
+
     env.render()
-    print( 'reward :', reward)
+    #print( 'reward :', reward)
 
 
