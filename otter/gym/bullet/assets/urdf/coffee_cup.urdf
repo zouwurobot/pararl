@@ -17,6 +17,9 @@
       <geometry>
            <mesh filename="coffee_cup.obj" scale="0.02 0.02 0.02"/>
       </geometry>
+      <material name="framemat0">
+        <color rgba="1 1 1 1"/>
+      </material>
     </visual>
     <collision>
       <geometry>

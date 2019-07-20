@@ -17,7 +17,7 @@ import pybullet_data
 from pkg_resources import parse_version
 import os
 # from deepx import *
-# import cv2
+import cv2
 
 largeValObservation = 100
 
@@ -40,17 +40,17 @@ KINOVA_HOME_EE_POS = [0.092, -0.443, 0.369]
 KINOVA_HOME_EE_ORN = [0.727, -0.01, 0.029, 0.686]
 
 # the first camera paremeters
-CAMERA_TARGET_POS = (0.0, -0.842, 0.316)
-CAM_DIS = 1.42
-CAM_YAW  = 181
-CAM_PITCH  = -60.6
+CAMERA_TARGET_POS = (0.0, -0.735, -0.105)
+CAM_DIS = 1.158
+CAM_YAW  = 174.7
+CAM_PITCH  = -64.4
 CAM_ROLL = 0
 
 # the second camera paremeters, only if multi-view is True
-CAMERA_TARGET_POS_2RD = (0.0, -0.55, 0.35)
-CAM_DIS_2RD = 1.3
-CAM_YAW_2RD  = 180
-CAM_PITCH_2RD  = -40
+CAMERA_TARGET_POS_2RD = (0.0, -0.735, -0.105)
+CAM_DIS_2RD = 1.158
+CAM_YAW_2RD  = 174.7
+CAM_PITCH_2RD  = -64.4
 CAM_ROLL_2RD = 0
 
 
@@ -335,15 +335,19 @@ class KinovaXYZ(gym.Env, metaclass=abc.ABCMeta,):
 
     def _get_obs(self):
 
-        image_obs = self.render("rgb_array")
+
 
         if self._isImageObservation:
-            self._observation = image_obs.flatten()
+            img = self.render("rgb_array")
+
+            self._observation = (cv2.resize(img, (self._image_width, self._image_height), interpolation=cv2.INTER_LINEAR) / 255).flatten()
+
+
         else:
             kinovaState = self.kinova.GetObservation()
             self._observation = \
                 np.concatenate([np.array(kinovaState),
-                                np.array(kinovaState[:3]) - self.goal_point]).flatten()
+                                 ]).flatten()
         return self._observation
 
     def step(self, action):
