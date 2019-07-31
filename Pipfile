@@ -25,6 +25,8 @@ fabric = "*"
 pandas = "*"
 click = "*"
 
+path.py
+
 tensorflow-probability = "*"
 
 

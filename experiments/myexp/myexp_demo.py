@@ -1,6 +1,12 @@
 
 from otter.experiment import run
+import sys
+if sys.path.count('/opt/ros/kinetic/lib/python2.7/dist-packages'):
+    sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages')
 import otter.gym as gym
+
+sys.path.append('/opt/ros/kinetic/lib/python2.7/dist-packages')
+import ROS.src.otter_kinova_grasping.otter_kinova_grasping.scripts.kinova_cup
 
 env_params = {
       "environment_name": "ImageKinovaCupPusherEnv-v0",

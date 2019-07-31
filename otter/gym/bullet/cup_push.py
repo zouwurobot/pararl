@@ -3,6 +3,9 @@ currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentfram
 print ("current_dir=" + currentdir)
 os.sys.path.insert(0,currentdir)
 
+import sys
+#sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages')
+
 import math
 import gym
 from gym import spaces

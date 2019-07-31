@@ -59,7 +59,7 @@ def run_experiment(params, **kwargs):
 #    from .vae import TrainVAE
     #from .solar import Solar
     from .myexp import Myexp
-    EXPERIMENTS = [Myexp ]
+    EXPERIMENTS = [Myexp]
 
     EXPERIMENT_MAP = {}
     for experiment in EXPERIMENTS:

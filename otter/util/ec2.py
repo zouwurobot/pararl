@@ -10,27 +10,31 @@ import shutil
 import boto3
 from contextlib import contextmanager
 
-ec2 = boto3.client('ec2')
-s3 = boto3.resource('s3')
+ENABLE_AWS = False
 
-completed_requests = set()
 
-gfile = tf.gfile
+if ENABLE_AWS:
+    ec2 = boto3.client('ec2')
+    s3 = boto3.resource('s3')
 
-PEM_FILE = os.path.expanduser("~/.aws/umbrellas.pem")
+    completed_requests = set()
 
-COMMAND = """
-from parasol.experiment import from_json;
-from_json('%s').run()
-"""
+    gfile = tf.gfile
 
-GPU_COMMAND = """
-from deepx import T
-T.set_default_device(T.gpu())
-from parasol.experiment import from_json;
-with T.device(T.gpu()):
+    PEM_FILE = os.path.expanduser("~/.aws/umbrellas.pem")
+
+    COMMAND = """
+    from parasol.experiment import from_json;
     from_json('%s').run()
-"""
+    """
+
+    GPU_COMMAND = """
+    from deepx import T
+    T.set_default_device(T.gpu())
+    from parasol.experiment import from_json;
+    with T.device(T.gpu()):
+        from_json('%s').run()
+    """
 
 def run_remote(params_path, gpu=False, instance_type='m5.large', ami='ami-00b8b0b2dff90dcab', spot_price=0.5):
     command = COMMAND % params_path
