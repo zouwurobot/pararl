@@ -1,8 +1,0 @@
-prefix=/home/hu/ProjectOtter/pararl_2/ROS/devel
-
-Name: j2s6s300_moveit_config
-Description: Description of j2s6s300_moveit_config
-Version: 0.3.0
-Cflags: 
-Libs: -L/home/hu/ProjectOtter/pararl_2/ROS/devel/lib 
-Requires: 

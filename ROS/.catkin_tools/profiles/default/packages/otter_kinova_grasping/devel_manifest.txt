@@ -1,5 +1,0 @@
-otter_kinova_grasping/otter_kinova_grasping
-/home/hu/ProjectOtter/pararl_2/ROS/devel/.private/otter_kinova_grasping/cmake.lock /home/hu/ProjectOtter/pararl_2/ROS/devel/./cmake.lock
-/home/hu/ProjectOtter/pararl_2/ROS/devel/.private/otter_kinova_grasping/lib/pkgconfig/otter_kinova_grasping.pc /home/hu/ProjectOtter/pararl_2/ROS/devel/lib/pkgconfig/otter_kinova_grasping.pc
-/home/hu/ProjectOtter/pararl_2/ROS/devel/.private/otter_kinova_grasping/share/otter_kinova_grasping/cmake/otter_kinova_graspingConfig-version.cmake /home/hu/ProjectOtter/pararl_2/ROS/devel/share/otter_kinova_grasping/cmake/otter_kinova_graspingConfig-version.cmake
-/home/hu/ProjectOtter/pararl_2/ROS/devel/.private/otter_kinova_grasping/share/otter_kinova_grasping/cmake/otter_kinova_graspingConfig.cmake /home/hu/ProjectOtter/pararl_2/ROS/devel/share/otter_kinova_grasping/cmake/otter_kinova_graspingConfig.cmake

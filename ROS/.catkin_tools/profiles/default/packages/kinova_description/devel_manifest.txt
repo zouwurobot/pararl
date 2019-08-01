@@ -1,5 +1,0 @@
-kinova-ros/kinova_description
-/home/hu/ProjectOtter/pararl_2/ROS/devel/.private/kinova_description/cmake.lock /home/hu/ProjectOtter/pararl_2/ROS/devel/./cmake.lock
-/home/hu/ProjectOtter/pararl_2/ROS/devel/.private/kinova_description/lib/pkgconfig/kinova_description.pc /home/hu/ProjectOtter/pararl_2/ROS/devel/lib/pkgconfig/kinova_description.pc
-/home/hu/ProjectOtter/pararl_2/ROS/devel/.private/kinova_description/share/kinova_description/cmake/kinova_descriptionConfig-version.cmake /home/hu/ProjectOtter/pararl_2/ROS/devel/share/kinova_description/cmake/kinova_descriptionConfig-version.cmake
-/home/hu/ProjectOtter/pararl_2/ROS/devel/.private/kinova_description/share/kinova_description/cmake/kinova_descriptionConfig.cmake /home/hu/ProjectOtter/pararl_2/ROS/devel/share/kinova_description/cmake/kinova_descriptionConfig.cmake

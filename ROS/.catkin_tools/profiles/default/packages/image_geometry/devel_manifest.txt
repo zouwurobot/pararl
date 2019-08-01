@@ -1,7 +1,0 @@
-vision_opencv/image_geometry
-/home/hu/ProjectOtter/pararl_2/ROS/devel/.private/image_geometry/cmake.lock /home/hu/ProjectOtter/pararl_2/ROS/devel/./cmake.lock
-/home/hu/ProjectOtter/pararl_2/ROS/devel/.private/image_geometry/lib/libimage_geometry.so /home/hu/ProjectOtter/pararl_2/ROS/devel/lib/libimage_geometry.so
-/home/hu/ProjectOtter/pararl_2/ROS/devel/.private/image_geometry/lib/pkgconfig/image_geometry.pc /home/hu/ProjectOtter/pararl_2/ROS/devel/lib/pkgconfig/image_geometry.pc
-/home/hu/ProjectOtter/pararl_2/ROS/devel/.private/image_geometry/lib/python3/dist-packages/image_geometry/__init__.py /home/hu/ProjectOtter/pararl_2/ROS/devel/lib/python3/dist-packages/image_geometry/__init__.py
-/home/hu/ProjectOtter/pararl_2/ROS/devel/.private/image_geometry/share/image_geometry/cmake/image_geometryConfig.cmake /home/hu/ProjectOtter/pararl_2/ROS/devel/share/image_geometry/cmake/image_geometryConfig.cmake
-/home/hu/ProjectOtter/pararl_2/ROS/devel/.private/image_geometry/share/image_geometry/cmake/image_geometryConfig-version.cmake /home/hu/ProjectOtter/pararl_2/ROS/devel/share/image_geometry/cmake/image_geometryConfig-version.cmake
