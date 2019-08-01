@@ -59,9 +59,9 @@ env_params = {
 
     "random_init_cup_position": True,
     "random_target_position": True,
-
+    "debug": True,
     "image": True,
-    "image_dim": 128,
+    "image_dim": 64,
 
     'isRender': True,
 

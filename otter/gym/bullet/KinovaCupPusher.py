@@ -143,6 +143,7 @@ class ImageKinovaCupPusherEnv(GymWrapper):
             'debug': kwargs.pop('debug', False),
             'multi_view': kwargs.pop('multi_view', False),
             'hard_reset': kwargs.pop('hard_reset', False),
+
             'state_vis': kwargs.pop('state_vis', False),
             'robot_info_debug': kwargs.pop('robot_info_debug', False),
             'hand_low': kwargs.pop('hand_low', (X_LOW, Y_LOW, Z_LOW)),

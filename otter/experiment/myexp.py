@@ -132,7 +132,7 @@ class Myexp(Experiment):
 
 
         if self.dump_data and 'load_data' not in self.data_params:
-            with gfile.GFile(out_dir / "data" / "rollouts.pkl", 'wb') as fp:
+            with gfile.GFile(out_dir / "data" / "data.pkl", 'wb') as fp:
                 pickle.dump(rollouts, fp)
 
         print('This is a experiment on Myexp!')
