@@ -9,14 +9,17 @@ import otter.util as util
 import otter.gym as gym
 # import parasol.control
 # import parasol.model
-
+import sys
 from .common import Experiment
+sys.path.append('/opt/ros/kinetic/lib/python2.7/dist-packages')
+import ROS.src.otter_kinova_grasping.otter_kinova_grasping.scripts.kinova_cup as kc
 
 gfile = tf.gfile
 
-class Myexp(Experiment):
 
-    experiment_type = 'myexp'
+class Myexp_real(Experiment):
+
+    experiment_type = 'myexp_real'
 
     def __init__(self, experiment_name, env, control, model,
                  seed=0,
@@ -31,7 +34,7 @@ class Myexp(Experiment):
                  model_train={},
                  **kwargs):
 
-        super(Myexp, self).__init__(experiment_name, **kwargs)
+        super(Myexp_real, self).__init__(experiment_name, **kwargs)
         self.env_params = env
         self.control_params = control
         self.horizon = horizon
@@ -50,7 +53,7 @@ class Myexp(Experiment):
         if not gfile.Exists(out_dir / "data"):
             gfile.MakeDirs(out_dir / "data")
 
-        self.env = gym.from_config(self.env_params)
+        self.env = kc.CupAgentROS()
         self.initialize_params()
 
         print('initializing the experiment..')
@@ -87,7 +90,7 @@ class Myexp(Experiment):
 
     @classmethod
     def from_dict(cls, params):
-        return Myexp(
+        return Myexp_real(
             params['experiment_name'],
             params['env'],
             params['control'],
@@ -119,7 +122,7 @@ class Myexp(Experiment):
                                        smooth=self.data_params['smooth_noise'])
 
         num_rollouts = self.data_params['num_rollouts']
-        policy = lambda _, __, ___, noise: noise
+        policy = lambda noise: noise
 
         rollouts = self.env.rollouts(num_rollouts, self.horizon, policy=policy, noise=noise_function, show_progress=True, )
 

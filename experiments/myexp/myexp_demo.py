@@ -6,7 +6,7 @@ if sys.path.count('/opt/ros/kinetic/lib/python2.7/dist-packages'):
 import otter.gym as gym
 
 sys.path.append('/opt/ros/kinetic/lib/python2.7/dist-packages')
-import ROS.src.otter_kinova_grasping.otter_kinova_grasping.scripts.kinova_cup
+# import ROS.src.otter_kinova_grasping.otter_kinova_grasping.scripts.kinova_cup
 
 env_params = {
       "environment_name": "ImageKinovaCupPusherEnv-v0",
@@ -28,7 +28,8 @@ du = da = 0#env.get_action_dim()
 horizon=50
 experiment = dict(
     experiment_name='kinova-image',
-    experiment_type='myexp',
+    experiment_type='myexp_real',
+    # experiment_type='myexp',
     env=env_params,
     model=dict(
         do=do, du=du, ds=ds, da=da, horizon=horizon,

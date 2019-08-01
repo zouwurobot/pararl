@@ -39,7 +39,8 @@ def expand_params(params):
             return
     yield params, []
 
-def run(params, **kwargs):
+
+def run(params,  **kwargs):
     num_threads = kwargs.pop('num_threads', 1)
     experiments = []
     for param, expansions in expand_params(params):
@@ -55,11 +56,15 @@ def run(params, **kwargs):
         for experiment in experiments:
             run_experiment(experiment, **kwargs)
 
+
 def run_experiment(params, **kwargs):
 #    from .vae import TrainVAE
     #from .solar import Solar
-    from .myexp import Myexp
-    EXPERIMENTS = [Myexp]
+    # from .myexp import Myexp
+    # EXPERIMENTS = [Myexp]
+
+    from .myexp_real import Myexp_real
+    EXPERIMENTS = [Myexp_real]
 
     EXPERIMENT_MAP = {}
     for experiment in EXPERIMENTS:
