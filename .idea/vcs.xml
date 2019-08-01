@@ -8,5 +8,6 @@
     <mapping directory="$PROJECT_DIR$/ROS/src/geometry2" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/ROS/src/kinova-ros" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/ROS/src/otter_kinova_grasping" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/ROS/src/vision_opencv" vcs="Git" />
   </component>
 </project>

@@ -1,0 +1,8 @@
+prefix=/home/hu/ProjectOtter/pararl_2/ROS/devel
+
+Name: kinova_description
+Description: Description of kinova_description
+Version: 0.0.1
+Cflags: 
+Libs: -L/home/hu/ProjectOtter/pararl_2/ROS/devel/lib 
+Requires: 

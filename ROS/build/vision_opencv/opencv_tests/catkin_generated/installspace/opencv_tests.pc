@@ -1,0 +1,8 @@
+prefix=/home/hu/ProjectOtter/pararl_2/ROS/install
+
+Name: opencv_tests
+Description: Description of opencv_tests
+Version: 1.13.0
+Cflags: 
+Libs: -L/home/hu/ProjectOtter/pararl_2/ROS/install/lib 
+Requires: 

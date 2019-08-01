@@ -60,11 +60,13 @@ def run(params,  **kwargs):
 def run_experiment(params, **kwargs):
 #    from .vae import TrainVAE
     #from .solar import Solar
-    # from .myexp import Myexp
-    # EXPERIMENTS = [Myexp]
+    if params.get('experiment_type')=='myexp_real':
+        from .myexp_real import Myexp_real
+        EXPERIMENTS = [Myexp_real]
 
-    from .myexp_real import Myexp_real
-    EXPERIMENTS = [Myexp_real]
+    elif params.get('experiment_type')=='myexp':
+        from .myexp import Myexp
+        EXPERIMENTS = [Myexp]
 
     EXPERIMENT_MAP = {}
     for experiment in EXPERIMENTS:

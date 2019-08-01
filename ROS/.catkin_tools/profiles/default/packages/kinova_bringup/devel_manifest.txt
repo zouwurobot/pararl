@@ -1,0 +1,5 @@
+kinova-ros/kinova_bringup
+/home/hu/ProjectOtter/pararl_2/ROS/devel/.private/kinova_bringup/cmake.lock /home/hu/ProjectOtter/pararl_2/ROS/devel/./cmake.lock
+/home/hu/ProjectOtter/pararl_2/ROS/devel/.private/kinova_bringup/lib/pkgconfig/kinova_bringup.pc /home/hu/ProjectOtter/pararl_2/ROS/devel/lib/pkgconfig/kinova_bringup.pc
+/home/hu/ProjectOtter/pararl_2/ROS/devel/.private/kinova_bringup/share/kinova_bringup/cmake/kinova_bringupConfig.cmake /home/hu/ProjectOtter/pararl_2/ROS/devel/share/kinova_bringup/cmake/kinova_bringupConfig.cmake
+/home/hu/ProjectOtter/pararl_2/ROS/devel/.private/kinova_bringup/share/kinova_bringup/cmake/kinova_bringupConfig-version.cmake /home/hu/ProjectOtter/pararl_2/ROS/devel/share/kinova_bringup/cmake/kinova_bringupConfig-version.cmake

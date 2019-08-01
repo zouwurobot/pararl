@@ -13,7 +13,7 @@
         "random_target_position": true
     },
     "experiment_name": "kinova-image",
-    "experiment_type": "myexp_real",
+    "experiment_type": "myexp",
     "horizon": 100,
     "model": {
         "action_decoder": null,

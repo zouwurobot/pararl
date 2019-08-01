@@ -1,0 +1,8 @@
+prefix=/home/hu/ProjectOtter/pararl_2/ROS/devel
+
+Name: kinova_control
+Description: Description of kinova_control
+Version: 0.0.0
+Cflags: 
+Libs: -L/home/hu/ProjectOtter/pararl_2/ROS/devel/lib 
+Requires: 

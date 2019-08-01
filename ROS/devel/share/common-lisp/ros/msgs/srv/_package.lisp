@@ -1,0 +1,15 @@
+(cl:defpackage msgs-srv
+  (:use )
+  (:export
+   "HOME"
+   "<HOME-REQUEST>"
+   "HOME-REQUEST"
+   "<HOME-RESPONSE>"
+   "HOME-RESPONSE"
+   "HOMEANDLIMIT"
+   "<HOMEANDLIMIT-REQUEST>"
+   "HOMEANDLIMIT-REQUEST"
+   "<HOMEANDLIMIT-RESPONSE>"
+   "HOMEANDLIMIT-RESPONSE"
+  ))
+
