@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/home/hu/ProjectOtter/pararl_2/otter/experiment/common.py", line 44, in run
+    self.run_experiment(out_dir)
+  File "/home/hu/ProjectOtter/pararl_2/otter/experiment/myexp_real.py", line 127, in run_experiment
+    rollouts = self.env.rollouts(num_rollouts, self.horizon, policy=policy, noise=noise_function, show_progress=True, )
+  File "/home/hu/ProjectOtter/pararl_2/ROS/src/otter_kinova_grasping/otter_kinova_grasping/scripts/kinova_agent_base.py", line 242, in rollouts
+    self.rollout(num_horizon, policy)
+  File "/home/hu/ProjectOtter/pararl_2/ROS/src/otter_kinova_grasping/otter_kinova_grasping/scripts/kinova_agent_base.py", line 221, in rollout
+    actions[t] = policy(states[t])
+ValueError: could not broadcast input array from shape (49152) into shape (3)

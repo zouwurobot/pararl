@@ -1,0 +1,42 @@
+{
+    "buffer_size": 100,
+    "control": {
+        "num_epochs": 1000
+    },
+    "dump_data": true,
+    "env": {
+        "environment_name": "ImageKinovaCupPusherEnv-v0",
+        "image": true,
+        "image_dim": 48,
+        "isRender": true,
+        "random_init_cup_position": true,
+        "random_target_position": true
+    },
+    "experiment_name": "kinova-image",
+    "experiment_type": "myexp_real",
+    "horizon": 100,
+    "model": {
+        "action_decoder": null,
+        "action_encoder": null,
+        "cost": {
+            "cost_type": "quadratic"
+        },
+        "da": 0,
+        "do": 0,
+        "ds": 10,
+        "du": 0,
+        "horizon": 50,
+        "prior": null,
+        "state_decoder": null,
+        "state_encoder": null
+    },
+    "model_train": {
+        "num_epochs": 0
+    },
+    "num_iters": 50,
+    "num_videos": 2,
+    "out_dir": "data/vae",
+    "rollouts_per_iter": 20,
+    "seed": 0,
+    "smooth_noise": false
+}
