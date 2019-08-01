@@ -2,5 +2,11 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/ROS/geometry" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/ROS/geometry2" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/ROS/src/geometry" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/ROS/src/geometry2" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/ROS/src/kinova-ros" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/ROS/src/otter_kinova_grasping" vcs="Git" />
   </component>
 </project>
