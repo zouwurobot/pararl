@@ -52,9 +52,6 @@ class ImageKinovaCupPusher(KinovaXYZ):
 
         KinovaXYZ.__init__(self,  **kwargs)
 
-
-
-
     def build_env(self):
         cup_init_position = self.set_init_cup_pos()
         orn = p.getQuaternionFromEuler([math.pi/2, 0, 0])
@@ -72,6 +69,7 @@ class ImageKinovaCupPusher(KinovaXYZ):
 
         tea_dyn = p.getDynamicsInfo(self.teacupUid, -1)
         print('fiction of tea cup:', tea_dyn)
+
     def reset(self):
         if not self._hard_reset:
             cup_init_position = self.set_init_cup_pos()

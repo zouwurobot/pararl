@@ -64,7 +64,6 @@ env_params = {
     "image_dim": 64,
 
     'isRender': True,
-
     'debug': True
 }
 

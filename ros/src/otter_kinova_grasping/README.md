@@ -5,14 +5,7 @@ This repository contains a ROS package for running a simple test on a Kinova Jac
 
 Modified from GGCNN Grasping, thanks to Doug Morrison's work.
 
-```text
-@article{morrison2018closing, 
-	title={Closing the Loop for Robotic Grasping: A Real-time, Generative Grasp Synthesis Approach}, 
-	author={Morrison, Douglas and Corke, Peter and Leitner, Jürgen}, 
-	booktitle={Robotics: Science and Systems (RSS)}, 
-	year={2018} 
-}
-```
+ 
 
 ## Installation
 

@@ -1,5 +1,4 @@
 #! /usr/bin/env python
-
 import os
 import inspect
 # currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
@@ -42,19 +41,79 @@ from std_msgs.msg import String
 
 import collections
 
+DEFAULT_TARGET_POS = (-0.15, -0.75, 0.25)
+CPU_DEFALUT_POSITION = [0., -0.55, 0.25]
 
 class CupAgentROS(AgentROSbase):
-    def __init__(self):
-        # rospy.init_node('agent_ros_node')
+    def __init__(self,
+
+                 random_init_cup_position=True,
+                 random_target_position=False,
+                 default_target_position=DEFAULT_TARGET_POS,
+                 **kwargs
+                 ):
+
+
+        self._default_target_positon = list(default_target_position)
+        self._random_target_position = random_target_position
+
+        self._random_init_cup_position = random_init_cup_position
         AgentROSbase.__init__(self)
 
+
+    def set_target_pos(self):
+        if self._random_target_position:
+            goal_point = np.array([self.np_random.uniform(-0.25, 0.25), self.np_random.uniform(-0.8, -0.6), 0.25])
+        else:
+            goal_point = np.array(self._default_target_positon)
+
+        self.target_pos = goal_point
+
+
+    def get_cup_pos(self):
+        # TODO
+        cup_pos =  [0,0,0]
+        return  cup_pos
+
+    def set_init_cup_pos(self):
+        if self._random_init_cup_position:
+            init_pos = np.array([self.np_random.uniform(-0.25, 0.25), self.np_random.uniform(-0.46, -0.55), 0.25])
+        else:
+
+            init_pos = CPU_DEFALUT_POSITION
+
+        return init_pos
+
     def reward(self, obs, action):
-        return 0.1
+        cupPos = self.get_cup_pos()
 
-    def policy(self, state):
-        return [0, -0.5, 0]
+        # TODO
+        dist = np.array(cupPos) - self.target_pos
+        reward_dist = -np.square(dist).sum()
 
-if __name__ == '__main__':
+        return reward_dist
+
+    def get_state_dim(self):
+        #TODO
+        return  3*128*128
+
+    def get_action_dim(self):
+        return  3
+
+    def _observe(self):
+        obs = self.rollout_temp.image.flatten()
+        return obs
+
+    def reset(self):
+        obs = super().reset()
+        self.set_target_pos()
+        return obs
+
+
+
+
+#if __name__ == '__main__':
+def _test():
     cupAgent = CupAgentROS()
     print('set')
     DIR1 = grandgrandparentdir

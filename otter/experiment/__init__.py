@@ -60,6 +60,8 @@ def run(params,  **kwargs):
 def run_experiment(params, **kwargs):
 #    from .vae import TrainVAE
     #from .solar import Solar
+
+
     if params.get('experiment_type')=='myexp_real':
         from .myexp_real import Myexp_real
         EXPERIMENTS = [Myexp_real]

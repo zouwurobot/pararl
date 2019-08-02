@@ -14,8 +14,12 @@ import matplotlib.pyplot as plt
 ## [0] coresponding to position noise stv, [1] -- velocity noise stv, [2] -- torque noise stv
 SENSOR_NOISE_STDDEV = (0.0, 0.0, 0.0)
 #pybullet_data.getDataPath()
-INIT_ENDEFFORTPOSITION = [0.537, 0.0, 0.5]
+INIT_ENDEFFORTPOSITION =   [0.09, -0.4, 0.4]
 INIT_ENDEFFORTANGLE = 0
+
+KINOVA_HOME_EE_POS = (0.092, -0.443, 0.369)
+KINOVA_HOME_EE_ORN = (0.727, -0.01, 0.029, 0.686)
+
 INIT_CONFIGURATION =  [math.pi/2, math.pi, math.pi, math.pi/6, 0, math.pi/2, 0, 1, 1, 1]
 
 X_HIGH = 0.3
@@ -24,7 +28,6 @@ Y_HIGH = -0.3
 Y_LOW = -0.85
 Z_HIGH = 0.6
 Z_LOW = 0.2
-
 
 class Kinova:
   #TODO urdf path
@@ -110,8 +113,8 @@ class Kinova:
 
     if self.useInverseKinematics:
        ee_res = self.GetEndEffectorObersavations()
-       self.endEffectorPos = [0.09, -0.4, 0.4]#ee_res[0]
-       self.endEffectorOrn = ee_res[1]
+       self.endEffectorPos = list(KINOVA_HOME_EE_POS) #[0.09, -0.4, 0.4]#ee_res[0]
+       self.endEffectorOrn = list(KINOVA_HOME_EE_ORN)
 
        self.endEffectorAngle  = self.GetTrueMotorAngles()[6]
 
@@ -143,17 +146,20 @@ class Kinova:
       self._GetJointInfo()
       self._ResetJointState()
 
-      # reset joint angle
-      for i in range(self.numMotors):
-        self._SetDesiredMotorAngleById(self.motorIndices[i], self._init_jointPositions[i], max_velocity= 10)
+      # # reset joint angle
+      # for i in range(self.numMotors):
+      #   self._SetDesiredMotorAngleById(self.motorIndices[i], self._init_jointPositions[i], max_velocity= 10)
     else:
       self._pybullet_client.resetBasePositionAndOrientation(self.kinovaUid, self._basePosition, self._baseOrientation)
       self._pybullet_client.resetBaseVelocity(self.kinovaUid, [0, 0, 0], [0, 0, 0])
 
       self._ResetJointState()
-      # reset joint ange
-      for i in range(self.numMotors):
-        self._SetDesiredMotorAngleById(self.motorIndices[i], self._init_jointPositions[i], max_velocity=10)
+
+    self.endEffectorPos = list(KINOVA_HOME_EE_POS)  # [0.09, -0.4, 0.4]#ee_res[0]
+    self.endEffectorOrn = list(KINOVA_HOME_EE_ORN)
+      # # reset joint ange
+      # for i in range(self.numMotors):
+      #   self._SetDesiredMotorAngleById(self.motorIndices[i], self._init_jointPositions[i], max_velocity=10)
 
     if self.verbose:
       print('reset joint angle: ', self.GetTrueMotorAngles())

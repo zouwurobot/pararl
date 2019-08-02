@@ -290,6 +290,7 @@ class KinovaXYZ(gym.Env, metaclass=abc.ABCMeta,):
                                         hand_high= self.hand_high,
                                         hand_low= self.hand_low)
         else:
+
             self.kinova.reset(reload_urdf=False)
 
         self.terminated = 0

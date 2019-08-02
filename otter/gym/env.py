@@ -4,6 +4,7 @@ import contextlib
 import tqdm
 import numpy as np
 import six
+import contextlib
 from abc import ABCMeta, abstractmethod
 from contextlib import contextmanager
 import tensorflow as tf
