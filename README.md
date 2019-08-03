@@ -31,4 +31,23 @@ open another terminal, then input
 
 
 
+### Build your project
+1. build ros in Python2.7 terminal
+ ```bash
+cd ros/src
+catkin_make
+source devel/setup.bash
+```
+2. connect to the kinova 
+```
+roslaunch kinova_bringup kinova_robot.launch
+```
+
+3. open realsense
+```angular2
+roslaunch otter_kinova_grasping kinova_camera.launch 
+```
+and you can open `rviz` to visualize the image from the realsense.
+
+4.
 

@@ -20,8 +20,7 @@ import actionlib_msgs.msg
 # import otter_kinova_grasping.ActionCommand.msg
 import msgs.msg
 import msgs.srv
-import cv2
-from cv_bridge import CvBridge, CvBridgeError
+
 from .kinova_agent_base import *
 
 # from otter_kinova_grasping.otter_kinova_grasping.scripts.helpers.gripper_action_client import set_finger_positions
@@ -39,23 +38,28 @@ from std_msgs.msg import Float32MultiArray
 from std_msgs.msg import String
 import collections
 
+
+
 __all__ = [ 'ROSImageKinovaCupPusherEnv']
 
 DEFAULT_TARGET_POS = (-0.15, -0.75, 0.25)
 CPU_DEFALUT_POSITION = [0., -0.55, 0.25]
 
-class ROSKinovaCupPusher(AgentROSbase):
+class ROSKinovaCupPusher(AgentROSbase,metaclass=abc.ABCMeta,):
     def __init__(self,
                  random_init_cup_position=True,
                  random_target_position=False,
                  default_target_position=DEFAULT_TARGET_POS,
+                 isImageObservation = True,
                  **kwargs
                  ):
+
+        self._isImageObservation = isImageObservation
         self._default_target_positon = list(default_target_position)
         self._random_target_position = random_target_position
 
         self._random_init_cup_position = random_init_cup_position
-        AgentROSbase.__init__(self)
+        AgentROSbase.__init__(self, **kwargs)
 
 
     def set_target_pos(self):
@@ -98,8 +102,7 @@ class ROSKinovaCupPusher(AgentROSbase):
         return  3
 
     def _observe(self):
-        
-       if  self.isImageObservation:
+       if  self._isImageObservation:
            obs = self.rollout_temp.image.flatten()
        else:
            obs = np.concatenate(
@@ -121,8 +124,7 @@ class ROSImageKinovaCupPusherEnv(ROSKinovaCupPusher):
     
     def __init__(self, **kwargs):
         config = {
-            
-            'control_rate':kwargs.pop('control_rate', 10), 
+            'control_rate': kwargs.pop('control_rate', 10.0),
             
             #'hand_low': kwargs.pop('hand_low', (X_LOW, Y_LOW, Z_LOW)),
             #'hand_high': kwargs.pop('hand_high', (X_HIGH, Y_HIGH, Z_HIGH)),
@@ -143,7 +145,7 @@ class ROSImageKinovaCupPusherEnv(ROSKinovaCupPusher):
         if config['image'] is True:
             config['isImageObservation'] = True
             config['image_height'] = config['image_width'] = config['image_dim']
-        super(ROSKinovaCupPusher, self).__init__(config)
+        super(ROSImageKinovaCupPusherEnv, self).__init__(**config)
         
     def torque_matrix(self):
         return 2 * np.eye(self.get_action_dim())

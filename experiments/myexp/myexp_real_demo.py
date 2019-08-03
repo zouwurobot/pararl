@@ -1,3 +1,7 @@
+import os,  inspect
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(os.path.dirname(currentdir))
+os.sys.path.insert(0,parentdir)
 
 from otter.experiment import run
 import sys
@@ -66,7 +70,7 @@ experiment = dict(
     horizon=100,
 
     rollouts_per_iter=20,
-    num_iters=50,
+    num_iters=5,
     buffer_size=100,
     smooth_noise=False,
     num_videos=2,
