@@ -32,7 +32,7 @@ open another terminal, then input
 
 
 ### Build your project
-1. build ros in Python2.7 terminal
+1. build ros in Python3.5 terminal in order to use opencv
  ```bash
 cd ros/src
 catkin_make
@@ -49,5 +49,13 @@ roslaunch otter_kinova_grasping kinova_camera.launch
 ```
 and you can open `rviz` to visualize the image from the realsense.
 
-4.
+4. rosrun kinova_controller
+```angular2
+export PYTHONPATH="/usr/lib/python2.7/dist-packages:$PYTHONPATH"
+rosrun otter_kinova_grasping kinova_control.py 
+```
 
+5. run the demo
+```angular2
+python experiments/myexp/myexp_real_demo.py
+```
