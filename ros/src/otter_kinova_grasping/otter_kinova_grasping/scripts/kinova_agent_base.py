@@ -47,14 +47,15 @@ currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentfram
 grandgrandparentdir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(currentdir))))
 
 IMAGE_WIDTH = 128
-STATE_DIM = 3*IMAGE_WIDTH*IMAGE_WIDTH  #TODO
+IMAGE_HEIGHT = 128
+STATE_DIM = 3*IMAGE_HEIGHT*IMAGE_WIDTH  #TODO
 CROP_SIZE = 360
 
 KINOVA_HOME_ANGLE = [4.543, 3.370, -0.264, 0.580, 2.705, 4.350, 6.425, 0, 0,0 ]
 KINOVA_HOME_XYZ = (0.09, -0.446, 0.375)
 KINOVA_HOME_ORIENTATION = (0.708, -0.019, 0.037, 0.705)
 KINOVA_LIMIT = [-0.1, 0.2, -0.7, -0.4, 0.365, 0.465]
-K = 0.02        # velocity parameter v = K*input(from -1 to 1)m/s
+
 
 def policy1(stat):
     act = [1, 1, 1]
@@ -92,21 +93,28 @@ class AgentROSbase(object):
     rollout_temp = RollOutData()
 
     def __init__(self,
-                 sliding_window= 0,
+                 
                  control_rate = 1,
-                 is_VelControl=True,):
+                 is_VelControl=True,
+                 sliding_window=0,
+
+                 image_width = IMAGE_WIDTH,
+                 image_height= IMAGE_HEIGHT,):
+
+        self._image_height = image_height
+        self._image_width = image_width
 
         self.control_rate = control_rate
         self.currently_logging = False
         self.sliding_window = sliding_window
         self.is_VelControl = is_VelControl
 
-        rospy.init_node('agent_ros_node')
+        rospy.init_node('kinova_agent_node')
         self._init_pubs_and_subs()
 
 
-        r = rospy.Rate(self.control_rate)
-        r.sleep()
+        self.r = rospy.Rate(self.control_rate)
+        self.r.sleep()
         self.bridge = CvBridge()
 
 
@@ -149,7 +157,7 @@ class AgentROSbase(object):
         # self.rollout_temp.image = cv2.resize(original_image[(480 - crop_size) // 2:(480 - crop_size) // 2 + crop_size,
         #                                 (640 - crop_size) // 2:(640 - crop_size) // 2 + crop_size], (IMAGE_WIDTH, IMAGE_WIDTH))
         self.rollout_temp.image = cv2.resize(original_image[0:CROP_SIZE,
-                                        (640 - CROP_SIZE) // 2:(640 - CROP_SIZE) // 2 + CROP_SIZE], (IMAGE_WIDTH, IMAGE_WIDTH))/255
+                                (640 - CROP_SIZE) // 2:(640 - CROP_SIZE) // 2 + CROP_SIZE], (self._image_height, self._image_width))  /255
         # print(type(self.rollout_temp.image))
 
 
@@ -231,7 +239,8 @@ class AgentROSbase(object):
     def _applyAction(self, actions):
 
         #TODO  vel & pos
-        pub_action = [K * i for i in actions]
+        actions = np.clip(actions, -1, 1)
+        pub_action = list(actions)
         self.cmd_pub.publish(msgs.msg.ActionCommand(*pub_action))
 
 
@@ -248,8 +257,7 @@ class AgentROSbase(object):
             def policy(_, t, noise=None):
                 return np.random.normal(size=self.get_action_dim(), scale=init_std)
 
-        #TODO why 10?
-        r = rospy.Rate(10)
+
         states, actions, costs = (
             np.zeros([num_horizon] + [self.get_state_dim()]),
             np.zeros([num_horizon] + [self.get_action_dim()]),
@@ -271,7 +279,7 @@ class AgentROSbase(object):
 
             for k, v in infos.items():
                 infos[k].append(v)
-            r.sleep()
+            self.r.sleep()
         if self.currently_logging:
             log_entry = collections.OrderedDict()
             log_entry['episode_number'] = self.episode_number

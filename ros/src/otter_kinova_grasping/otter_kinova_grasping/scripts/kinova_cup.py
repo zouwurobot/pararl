@@ -37,23 +37,20 @@ import pickle
 from sensor_msgs.msg import Image, CameraInfo
 from std_msgs.msg import Float32MultiArray
 from std_msgs.msg import String
-
-
 import collections
+
+__all__ = [ 'ROSImageKinovaCupPusherEnv']
 
 DEFAULT_TARGET_POS = (-0.15, -0.75, 0.25)
 CPU_DEFALUT_POSITION = [0., -0.55, 0.25]
 
-class CupAgentROS(AgentROSbase):
+class ROSKinovaCupPusher(AgentROSbase):
     def __init__(self,
-
                  random_init_cup_position=True,
                  random_target_position=False,
                  default_target_position=DEFAULT_TARGET_POS,
                  **kwargs
                  ):
-
-
         self._default_target_positon = list(default_target_position)
         self._random_target_position = random_target_position
 
@@ -101,8 +98,15 @@ class CupAgentROS(AgentROSbase):
         return  3
 
     def _observe(self):
-        obs = self.rollout_temp.image.flatten()
-        return obs
+        
+       if  self.isImageObservation:
+           obs = self.rollout_temp.image.flatten()
+       else:
+           obs = np.concatenate(
+                (self.rollout_temp.joint_angle, \
+                 self.rollout_temp.joint_velocity))
+           
+       return obs
 
     def reset(self):
         obs = super().reset()
@@ -111,6 +115,57 @@ class CupAgentROS(AgentROSbase):
 
 
 
+class ROSImageKinovaCupPusherEnv(ROSKinovaCupPusher):
+    environment_name = 'ROSImageKinovaCupPusherEnv-v0'
+     
+    
+    def __init__(self, **kwargs):
+        config = {
+            
+            'control_rate':kwargs.pop('control_rate', 10), 
+            
+            #'hand_low': kwargs.pop('hand_low', (X_LOW, Y_LOW, Z_LOW)),
+            #'hand_high': kwargs.pop('hand_high', (X_HIGH, Y_HIGH, Z_HIGH)),
+            'isImageObservation': kwargs.pop('isImageObservation', True),
+            'random_init_arm_angle': kwargs.pop('random_init_arm_angle', False),  #TODO
+
+            # task
+            'random_init_cup_position': kwargs.pop('random_init_cup_position', True),
+            'random_target_position': kwargs.pop('random_target_position', False),
+            'default_target_position': kwargs.pop('default_target_position', DEFAULT_TARGET_POS),
+
+            # new parameters
+            'image': kwargs.pop('image', True),
+            'image_dim': kwargs.pop('image_dim', 128),
+            'sliding_window': kwargs.pop('sliding_window', 0),
+
+        }
+        if config['image'] is True:
+            config['isImageObservation'] = True
+            config['image_height'] = config['image_width'] = config['image_dim']
+        super(ROSKinovaCupPusher, self).__init__(config)
+        
+    def torque_matrix(self):
+        return 2 * np.eye(self.get_action_dim())
+
+    def make_summary(self, observations, name):
+        if self.image:
+            pass
+            observations = T.reshape(observations, [-1] + self.image_size())
+            T.core.summary.image(name, observations)
+
+    def is_image(self):
+        return self.image
+
+    def image_size(self):
+        if self.image:
+            return [self.image_dim, self.image_dim, 3]
+        return None
+
+    #def cost_fn(self, s, a):
+    #    return np.linalg.norm(s[:,-3:], axis=-1) + np.sum(np.square(a), axis=-1)
+
+     
 
 #if __name__ == '__main__':
 def _test():

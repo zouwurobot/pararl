@@ -34,27 +34,49 @@ from std_msgs.msg import String
 
 import inspect
 
+KINOVA_HOME_ANGLE = [4.543, 3.370, -0.264, 0.580, 2.705, 4.350, 6.425, 0, 0,0 ]
+KINOVA_HOME_XYZ = (0.09, -0.446, 0.375)
+KINOVA_HOME_ORIENTATION = (0.708, -0.019, 0.037, 0.705)
+
+X_HIGH = 0.3
+X_LOW = -0.3
+Y_HIGH = -0.3
+Y_LOW = -0.85
+Z_HIGH = 0.6
+Z_LOW = 0.2
+
 
 class AgentKinova():
     VELOCITY_CONTROL = 1  # when 0, position control; when 1, velocity control
-    POSE_FREQ = 10  # the frequency of input
-    K = 0.02  # coefficient of input to motion
+
     target_position = (0, -0.5, 0.4)
     bridge = CvBridge()
     MOVING = True  # when false, this program is to be shut down
-    x_v = 0
-    y_v = 0
-    z_v = 0
+
     temp_angles = []
     home_angles = []
     pose = []
-    x_r = 0.09
-    y_r = -0.446
-    z_r = 0.375
-    r = []
 
-    def __init__(self):
-        rospy.init_node('kinova_agent_node')
+    def __init__(self,
+                 control_rate = 10, # control rate
+                 hand_low=(X_LOW, Y_LOW, Z_LOW),
+                 hand_high=(X_HIGH, Y_HIGH, Z_HIGH),
+
+                 ):
+
+        self.control_rate = 10
+        self.Kv = 0.02  # coefficient of velocity, that is, the process quantity for unit action.
+
+        # setting the workspace wrt ee
+        self.ee_X_upperLimit = hand_high[0]
+        self.ee_X_lowerLimit = hand_low[0]
+        self.ee_Y_upperLimit = hand_high[1]
+        self.ee_Y_lowerLimit = hand_low[1]
+        self.ee_Z_upperLimit = hand_high[2]
+        self.ee_Z_lowerLimit = hand_low[2]
+
+
+        rospy.init_node('kinova_control_node')
         self._init_pubs_and_subs()
         r = rospy.Rate(100)
         r.sleep()
@@ -105,7 +127,7 @@ class AgentKinova():
     def move_home_init(self):
         # move_to_position([x_r,y_r,z_r], [0.072, 0.6902, -0.7172, 0.064])
 
-        move_to_position([self.x_r, self.y_r, self.z_r], [0.708, -0.019, 0.037, 0.705])
+        move_to_position(KINOVA_HOME_ANGLE, KINOVA_HOME_ORIENTATION)
         time.sleep(0.5)
         self.MOVING = True
         return 1
@@ -125,23 +147,23 @@ class AgentKinova():
         return 1
 
     def move_callback_velocity_control(self, data):
-        # disp = [data.data[0], data.data[1], data.data[2]]
-        x_v = data.x * self.POSE_FREQ * self.K
-        y_v = data.y * self.POSE_FREQ * self.K
-        z_v = data.z * self.POSE_FREQ * self.K
-        # self.rollout_temp.action = data.data
-        # self.rollout_temp.cmd = [x_v, y_v, z_v, 0, 0, 0]
-        if self.pose[0] > 0.2:
+
+        x_v = data.x * self.control_rate * self.Kv
+        y_v = data.y * self.control_rate * self.Kv
+        z_v = data.z * self.control_rate * self.Kv
+
+
+        if self.pose[0] > self.ee_X_upperLimit :
             x_v = -abs(x_v)
-        elif self.pose[0] < -0.1:
+        elif self.pose[0] < self.ee_X_lowerLimit :
             x_v = abs(x_v)
-        if self.pose[1] > -0.4:
+        if self.pose[1] > self.ee_Y_upperLimit :
             y_v = -abs(y_v)
-        elif self.pose[1] < -0.7:
+        elif self.pose[1] <self.ee_Y_lowerLimit:
             y_v = abs(y_v)
-        if self.pose[2] > 0.465:
+        if self.pose[2] > self.ee_Z_upperLimit:
             z_v = -abs(z_v)
-        elif self.pose[2] < 0.365:
+        elif self.pose[2] < self.ee_Z_lowerLimit:
             z_v = abs(z_v)
         self.x_v = x_v
         self.y_v = y_v
