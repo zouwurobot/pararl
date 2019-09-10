@@ -13,7 +13,7 @@ sys.path.append('/opt/ros/kinetic/lib/python2.7/dist-packages')
 # import ROS.src.otter_kinova_grasping.otter_kinova_grasping.scripts.kinova_cup
 
 env_params = {
-      "environment_name": "ImageKinovaCupPusherEnv-v0",
+    "environment_name": "ImageKinovaCupPusherEnv-v0",
 
     "random_init_cup_position": True,
     "random_target_position": True,
